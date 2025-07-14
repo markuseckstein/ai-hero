@@ -1,5 +1,6 @@
 import ReactMarkdown, { type Components } from "react-markdown";
 import type { Message } from "ai";
+import { ExternalLink } from "lucide-react";
 
 export type MessagePart = NonNullable<Message["parts"]>[number];
 
@@ -68,6 +69,29 @@ const ToolInvocation = ({
   );
 };
 
+const Source = ({ part }: { part: Extract<MessagePart, { type: "source" }> }) => {
+  if (part.type !== "source") return null;
+  const { source } = part;
+  return (
+    <div className="my-2 flex flex-wrap items-center gap-2 rounded bg-blue-900/60 p-2 text-xs text-blue-200" title={JSON.stringify(part, null, 2)}>
+      <span className="font-bold">Source:</span>
+      {source.title && <span className="mr-1 truncate max-w-[120px]" title={source.title}>{source.title}</span>}
+      <a
+        href={source.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1 underline text-blue-300 hover:text-blue-400"
+      >
+        <span className="truncate max-w-[200px] align-middle">{source.url}</span>
+        <ExternalLink className="inline-block h-3 w-3 align-middle" />
+      </a>
+      {source.providerMetadata && (
+        <span className="text-blue-300 ml-2">Provider: {JSON.stringify(source.providerMetadata)}</span>
+      )}
+    </div>
+  );
+};
+
 const Markdown = ({ children }: { children: string }) => {
   return <ReactMarkdown components={components}>{children}</ReactMarkdown>;
 };
@@ -93,7 +117,9 @@ export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
             if (part.type === "tool-invocation") {
               return <ToolInvocation key={idx} part={part} />;
             }
-            // You can add more part types here as needed
+            if (part.type === "source") {
+              return <Source key={idx} part={part} />;
+            }
             return null;
           })}
         </div>
