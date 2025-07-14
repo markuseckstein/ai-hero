@@ -55,5 +55,7 @@ docker run -d \
   --name $REDIS_CONTAINER_NAME \
   -p "$REDIS_PORT":6379 \
   redis \
-  /bin/sh -c "redis-server --requirepass \"$REDIS_PASSWORD\"" \
+  redis-server --requirepass "$REDIS_PASSWORD" \
   && echo "Redis container '$REDIS_CONTAINER_NAME' was successfully created"
+
+#podman run -d --name ai-app-template-redis -p 6379:6379 redis redis-server --requirepass "<password>"
