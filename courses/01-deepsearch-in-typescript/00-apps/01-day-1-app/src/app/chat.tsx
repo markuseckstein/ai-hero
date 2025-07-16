@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { isNewChatCreated } from "~/utils";
 import type { Message } from "ai";
+import { StickToBottom } from "use-stick-to-bottom";
 
 interface ChatProps {
   userName: string;
@@ -22,11 +23,11 @@ interface ChatProps {
 export const ChatPage = ({ userName, chatId, isNewChat, isAuthenticated, initialMessages }: ChatProps) => {
   const router = useRouter();
   const { data: session } = useSession();
-  
+
   const { isOpen, open, close } = useSignInModal();
 
 
-  
+
 
   const {
     messages,
@@ -73,16 +74,22 @@ export const ChatPage = ({ userName, chatId, isNewChat, isAuthenticated, initial
           role="log"
           aria-label="Chat messages"
         >
-          {/* <pre className="text-white">{JSON.stringify(messages, null, 2)}</pre> */}
-
-          {messages.map((message, index) => (
-            <ChatMessage
-              key={index}
-              parts={message.parts ?? []}
-              role={message.role}
-              userName={userName}
-            />
-          ))}
+          <StickToBottom
+            className="relative h-full [&>div]:scrollbar-thin [&>div]:scrollbar-track-gray-800 [&>div]:scrollbar-thumb-gray-600 [&>div]:hover:scrollbar-thumb-gray-500"
+            resize="smooth"
+            initial="smooth"
+          >
+            <StickToBottom.Content>
+              {messages.map((message, index) => (
+                <ChatMessage
+                  key={index}
+                  parts={message.parts ?? []}
+                  role={message.role}
+                  userName={userName}
+                />
+              ))}
+            </StickToBottom.Content>
+          </StickToBottom>
         </div>
 
         <div className="border-t border-gray-700">
@@ -111,6 +118,7 @@ export const ChatPage = ({ userName, chatId, isNewChat, isAuthenticated, initial
             </div>
           </form>
         </div>
+
       </div>
 
       <SignInModal isOpen={isOpen} onClose={close} />
