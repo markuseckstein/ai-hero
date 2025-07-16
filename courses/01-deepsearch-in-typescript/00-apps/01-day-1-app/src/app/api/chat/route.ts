@@ -1,5 +1,5 @@
 import type { Message } from "ai";
-import { streamText, createDataStreamResponse } from "ai";
+import { streamText, createDataStreamResponse, appendResponseMessages } from "ai";
 import { model } from "~/model";
 import { auth } from "~/server/auth";
 import { searchSerper } from "~/serper";
@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db } from "~/server/db";
 import { users, userRequests } from "~/server/db/schema";
 import { eq, and, gte, lt } from "drizzle-orm";
+import { upsertChat } from "~/server/db/chats";
 
 export const maxDuration = 60;
 
@@ -60,15 +61,39 @@ export async function POST(request: Request) {
   // Log the request
   await db.insert(userRequests).values({ userId: user.id });
 
-  const body = (await request.json()) as {
+  const { messages, chatId } = await request.json() as {
     messages: Array<Message>;
+    chatId?: string;
   };
+
+  // Generate a new chat ID if one wasn't provided
+  const actualChatId = chatId ?? crypto.randomUUID();
+
+  // Create or update the chat before streaming begins
+  // Use the first message's content as the chat title
+  const firstUserMessage = messages.find(m => m.role === 'user')?.content;
+  const chatTitle = typeof firstUserMessage === 'string' 
+    ? firstUserMessage.slice(0, 100) 
+    : 'New Chat';
+
+  await upsertChat({
+    userId: user.id,
+    chatId: actualChatId,
+    title: chatTitle,
+    messages,
+  });
 
   return createDataStreamResponse({
     execute: async (dataStream) => {
-      const { messages } = body;
+      // If this is a new chat, send the ID to the frontend
+      if (!chatId) {
+        dataStream.writeData({
+          type: "NEW_CHAT_CREATED",
+          chatId: actualChatId,
+        });
+      }
 
-      const result = streamText({
+      const result = await streamText({
         model,
         messages,
         tools: {
@@ -91,13 +116,29 @@ export async function POST(request: Request) {
         },
         system: `You are an AI assistant with access to a web search tool. Always use the searchWeb tool to answer user questions, and always cite your sources with inline markdown links, e.g. [title](url). Format all URLs as markdown links in your answers. Do not answer questions without searching.`,
         maxSteps: 10,
+        onFinish: async ({ response }) => {
+          if (response?.messages) {
+            const updatedMessages = appendResponseMessages({
+              messages,
+              responseMessages: response.messages,
+            });
+
+            // Update the chat with all messages including the AI response
+            await upsertChat({
+              userId: user.id,
+              chatId: actualChatId,
+              title: chatTitle,
+              messages: updatedMessages,
+            });
+          }
+        },
       });
 
       result.mergeIntoDataStream(dataStream);
     },
     onError: (e) => {
       console.error(e);
-      return "Oops, an error occured!";
+      return "Oops, an error occurred!";
     },
   });
 }
