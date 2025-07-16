@@ -4,6 +4,9 @@ import { model } from "~/model";
 import { auth } from "~/server/auth";
 import { searchSerper } from "~/serper";
 import { z } from "zod";
+import { db } from "~/server/db";
+import { users, userRequests } from "~/server/db/schema";
+import { eq, and, gte, lt } from "drizzle-orm";
 
 export const maxDuration = 60;
 
@@ -16,6 +19,46 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  // Fetch user from DB
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, session.user.id),
+  });
+  if (!user) {
+    return new Response(JSON.stringify({ error: "User not found" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // Rate limit: allow 100 requests per day for non-admins
+  const isAdmin = user.isAdmin;
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endOfDay = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+  );
+
+  if (!isAdmin) {
+    const requests = await db.query.userRequests.findMany({
+      where: and(
+        eq(userRequests.userId, user.id),
+        gte(userRequests.createdAt, startOfDay),
+        lt(userRequests.createdAt, endOfDay),
+      ),
+    });
+    if (requests.length >= 100) {
+      return new Response(JSON.stringify({ error: "Too Many Requests" }), {
+        status: 429,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  // Log the request
+  await db.insert(userRequests).values({ userId: user.id });
 
   const body = (await request.json()) as {
     messages: Array<Message>;
