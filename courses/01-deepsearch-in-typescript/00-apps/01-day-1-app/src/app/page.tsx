@@ -14,10 +14,14 @@ export default async function HomePage({
   const session = await auth();
   const userName = session?.user?.name ?? "Guest";
   const isAuthenticated = !!session?.user;
-  const { id: chatId } = await searchParams;
+  const { id: chatIdFromUrl } = await searchParams;
+
+  // Generate a stable chatId for new chats
+  const chatId = chatIdFromUrl ?? crypto.randomUUID();
+  const isNewChat = !chatIdFromUrl;
 
   // Fetch the list of chats for the sidebar
-  const userChats = isAuthenticated && session.user.id 
+  const userChats = isAuthenticated && session.user.id
     ? await getChats({ userId: session.user.id })
     : [];
 
@@ -25,6 +29,7 @@ export default async function HomePage({
   let initialMessages: Message[] | undefined;
   if (chatId && isAuthenticated && session.user.id) {
     const chat = await getChat({ userId: session.user.id, chatId });
+    
     if (chat?.messages) {
       initialMessages = chat.messages.map((msg) => ({
         id: msg.id,
@@ -33,8 +38,11 @@ export default async function HomePage({
         parts: msg.content as Message["parts"],
       }));
     }
+
+
+    // console.log("Fetched chat:", { chat, initialMessages });
   }
-  
+
   return (
     <div className="flex h-screen bg-gray-950">
       {/* Sidebar */}
@@ -59,11 +67,10 @@ export default async function HomePage({
               <div key={chat.id} className="flex items-center gap-2">
                 <Link
                   href={`/?id=${chat.id}`}
-                  className={`flex-1 rounded-lg p-3 text-left text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                    chat.id === chatId
-                      ? "bg-gray-700"
-                      : "hover:bg-gray-750 bg-gray-800"
-                  }`}
+                  className={`flex-1 rounded-lg p-3 text-left text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 ${chat.id === chatId
+                    ? "bg-gray-700"
+                    : "hover:bg-gray-750 bg-gray-800"
+                    }`}
                 >
                   {chat.title}
                 </Link>
@@ -83,13 +90,16 @@ export default async function HomePage({
             userImage={session?.user?.image}
           />
         </div>
+        
+
       </div>
 
-      <ChatPage 
-        userName={userName} 
-        chatId={chatId} 
-        isAuthenticated={isAuthenticated} 
+      <ChatPage
+        userName={userName}
+        chatId={chatId}
+        isAuthenticated={isAuthenticated}
         initialMessages={initialMessages}
+        isNewChat={!chatIdFromUrl}
       />
     </div>
   );

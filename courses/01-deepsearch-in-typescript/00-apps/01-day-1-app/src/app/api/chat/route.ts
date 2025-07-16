@@ -61,13 +61,11 @@ export async function POST(request: Request) {
   // Log the request
   await db.insert(userRequests).values({ userId: user.id });
 
-  const { messages, chatId } = await request.json() as {
+  const { messages, chatId, isNewChat } = await request.json() as {
     messages: Array<Message>;
-    chatId?: string;
+    chatId: string;
+    isNewChat?: boolean;
   };
-
-  // Generate a new chat ID if one wasn't provided
-  const actualChatId = chatId ?? crypto.randomUUID();
 
   // Create or update the chat before streaming begins
   // Use the first message's content as the chat title
@@ -78,7 +76,7 @@ export async function POST(request: Request) {
 
   await upsertChat({
     userId: user.id,
-    chatId: actualChatId,
+    chatId,
     title: chatTitle,
     messages,
   });
@@ -86,10 +84,10 @@ export async function POST(request: Request) {
   return createDataStreamResponse({
     execute: async (dataStream) => {
       // If this is a new chat, send the ID to the frontend
-      if (!chatId) {
+      if (isNewChat) {
         dataStream.writeData({
           type: "NEW_CHAT_CREATED",
-          chatId: actualChatId,
+          chatId,
         });
       }
 
@@ -126,7 +124,7 @@ export async function POST(request: Request) {
             // Update the chat with all messages including the AI response
             await upsertChat({
               userId: user.id,
-              chatId: actualChatId,
+              chatId,
               title: chatTitle,
               messages: updatedMessages,
             });

@@ -14,15 +14,20 @@ import type { Message } from "ai";
 interface ChatProps {
   userName: string;
   isAuthenticated: boolean;
-  chatId: string | undefined;
+  chatId: string;
+  isNewChat: boolean;
   initialMessages?: Message[];
 }
 
-export const ChatPage = ({ userName, chatId, isAuthenticated, initialMessages }: ChatProps) => {
+export const ChatPage = ({ userName, chatId, isNewChat, isAuthenticated, initialMessages }: ChatProps) => {
   const router = useRouter();
   const { data: session } = useSession();
   
   const { isOpen, open, close } = useSignInModal();
+
+
+  
+
   const {
     messages,
     input,
@@ -31,9 +36,15 @@ export const ChatPage = ({ userName, chatId, isAuthenticated, initialMessages }:
     isLoading,
     data,
   } = useChat({
-    body: chatId ? { chatId } : undefined,
+    id: chatId,
+    body: { chatId, isNewChat },
     initialMessages,
   });
+
+
+  console.log("ChatPage rendered with:", { initialMessages, messages, input, data, isLoading });
+
+
 
   // Watch for new chat creation and redirect
   useEffect(() => {
