@@ -15,9 +15,10 @@ interface ChatProps {
   userName: string;
   isAuthenticated: boolean;
   chatId: string | undefined;
+  initialMessages?: Message[];
 }
 
-export const ChatPage = ({ userName, chatId, isAuthenticated }: ChatProps) => {
+export const ChatPage = ({ userName, chatId, isAuthenticated, initialMessages }: ChatProps) => {
   const router = useRouter();
   const { data: session } = useSession();
   
@@ -31,6 +32,7 @@ export const ChatPage = ({ userName, chatId, isAuthenticated }: ChatProps) => {
     data,
   } = useChat({
     body: chatId ? { chatId } : undefined,
+    initialMessages,
   });
 
   // Watch for new chat creation and redirect

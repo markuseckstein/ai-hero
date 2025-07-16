@@ -86,7 +86,7 @@ export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
           {isAI ? "AI" : userName}
         </p>
         <div className="prose prose-invert max-w-none">
-          {parts.map((part, idx) => {
+          {parts && parts.length && parts.map((part, idx) => {
             if (part.type === "text") {
               return <Markdown key={idx}>{part.text}</Markdown>;
             }

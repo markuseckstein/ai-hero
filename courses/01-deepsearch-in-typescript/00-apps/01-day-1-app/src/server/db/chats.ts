@@ -77,6 +77,7 @@ export const getChat = async (opts: { userId: string; chatId: string }) => {
     messages: chat.messages.map((message) => ({
       role: message.role,
       content: message.parts,
+      id: message.id.toString(),
     })),
   };
 };
