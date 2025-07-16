@@ -68,29 +68,25 @@ export const ChatPage = ({ userName, chatId, isNewChat, isAuthenticated, initial
 
   return (
     <>
-      <div className="flex flex-1 flex-col">
-        <div
-          className="mx-auto w-full max-w-[65ch] flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500"
-          role="log"
-          aria-label="Chat messages"
+      <div className="flex flex-1 flex-col mx-auto w-full max-w-[75ch] p-4" role="log"
+        aria-label="Chat messages">
+
+        <StickToBottom
+          className="relative overflow-auto [&>div]:scrollbar-thin [&>div]:scrollbar-track-gray-800 [&>div]:scrollbar-thumb-gray-600 [&>div]:hover:scrollbar-thumb-gray-500"
+          resize="smooth"
+          initial="smooth"
         >
-          <StickToBottom
-            className="relative h-full [&>div]:scrollbar-thin [&>div]:scrollbar-track-gray-800 [&>div]:scrollbar-thumb-gray-600 [&>div]:hover:scrollbar-thumb-gray-500"
-            resize="smooth"
-            initial="smooth"
-          >
-            <StickToBottom.Content>
-              {messages.map((message, index) => (
-                <ChatMessage
-                  key={index}
-                  parts={message.parts ?? []}
-                  role={message.role}
-                  userName={userName}
-                />
-              ))}
-            </StickToBottom.Content>
-          </StickToBottom>
-        </div>
+          <StickToBottom.Content>
+            {messages.map((message, index) => (
+              <ChatMessage
+                key={index}
+                parts={message.parts ?? []}
+                role={message.role}
+                userName={userName}
+              />
+            ))}
+          </StickToBottom.Content>
+        </StickToBottom>
 
         <div className="border-t border-gray-700">
           <form onSubmit={handleSubmit} className="mx-auto max-w-[65ch] p-4">
