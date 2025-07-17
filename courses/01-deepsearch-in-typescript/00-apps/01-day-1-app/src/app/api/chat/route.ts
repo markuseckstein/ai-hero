@@ -8,10 +8,17 @@ import { db } from "~/server/db";
 import { users, userRequests } from "~/server/db/schema";
 import { eq, and, gte, lt } from "drizzle-orm";
 import { upsertChat } from "~/server/db/chats";
+import { Langfuse } from "langfuse";
+import { env } from "~/env";
 
 export const maxDuration = 60;
 
+const langfuse = new Langfuse({
+  environment: env.NODE_ENV,
+});
+
 export async function POST(request: Request) {
+
   // Check authentication
   const session = await auth();
   if (!session) {
@@ -67,11 +74,14 @@ export async function POST(request: Request) {
     isNewChat?: boolean;
   };
 
+  // Ensure we use the correct chatId for session
+  const currentChatId = chatId || (isNewChat ? chatId : undefined);
+
   // Create or update the chat before streaming begins
   // Use the first message's content as the chat title
   const firstUserMessage = messages.find(m => m.role === 'user')?.content;
-  const chatTitle = typeof firstUserMessage === 'string' 
-    ? firstUserMessage.slice(0, 100) 
+  const chatTitle = typeof firstUserMessage === 'string'
+    ? firstUserMessage.slice(0, 100)
     : 'New Chat';
 
   await upsertChat({
@@ -79,6 +89,13 @@ export async function POST(request: Request) {
     chatId,
     title: chatTitle,
     messages,
+  });
+
+  // Create Langfuse trace for this chat session
+  const trace = langfuse.trace({
+    sessionId: currentChatId,
+    name: "chat",
+    userId: user.id,
   });
 
   return createDataStreamResponse({
@@ -90,6 +107,8 @@ export async function POST(request: Request) {
           chatId,
         });
       }
+
+
 
       const result = await streamText({
         model,
@@ -112,8 +131,24 @@ export async function POST(request: Request) {
             },
           },
         },
-        system: `You are an AI assistant with access to a web search tool. Always use the searchWeb tool to answer user questions, and always cite your sources with inline markdown links, e.g. [title](url). Format all URLs as markdown links in your answers. Do not answer questions without searching.`,
+        system: `You are a helpful AI assistant with access to real-time web search capabilities. When answering questions:
+
+1. Always search the web for up-to-date information when relevant
+2. ALWAYS format URLs as markdown links using the format [title](url)
+3. Be thorough but concise in your responses
+4. If you're unsure about something, search the web to verify
+5. When providing information, always include the source where you found it using markdown links
+6. Never include raw URLs - always use markdown link format
+
+Remember to use the searchWeb tool whenever you need to find current information.`,
         maxSteps: 10,
+        experimental_telemetry: {
+          isEnabled: true,
+          functionId: "agent",
+          metadata: {
+            langfuseTraceId: trace.id,
+          },
+        },
         onFinish: async ({ response }) => {
           if (response?.messages) {
             const updatedMessages = appendResponseMessages({
@@ -129,6 +164,7 @@ export async function POST(request: Request) {
               messages: updatedMessages,
             });
           }
+          await langfuse.flushAsync();
         },
       });
 
