@@ -18,10 +18,22 @@ const langfuse = new Langfuse({
   environment: env.NODE_ENV,
 });
 
+
+
 export async function POST(request: Request) {
 
+  const trace = langfuse.trace({
+    sessionId: "chat",
+    name: "chat",
+    userId: "anonymous"
+  });
+
   // Check authentication
+  const authSpan = trace.span({ name: "auth", input: {} });
   const session = await auth();
+  authSpan.end({ output: session });
+  trace.update({ userId: session?.user.id });
+
   if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
@@ -30,9 +42,11 @@ export async function POST(request: Request) {
   }
 
   // Fetch user from DB
+  const userSpan = trace.span({ name: "db-find-user", input: { userId: session.user.id } });
   const user = await db.query.users.findFirst({
     where: eq(users.id, session.user.id),
   });
+  userSpan.end({ output: user });
   if (!user) {
     return new Response(JSON.stringify({ error: "User not found" }), {
       status: 401,
@@ -51,6 +65,7 @@ export async function POST(request: Request) {
   );
 
   if (!isAdmin) {
+    const rateLimitSpan = trace.span({ name: "db-rate-limit-check", input: { userId: user.id, startOfDay, endOfDay } });
     const requests = await db.query.userRequests.findMany({
       where: and(
         eq(userRequests.userId, user.id),
@@ -58,6 +73,7 @@ export async function POST(request: Request) {
         lt(userRequests.createdAt, endOfDay),
       ),
     });
+    rateLimitSpan.end({ output: requests });
     if (requests.length >= 100) {
       return new Response(JSON.stringify({ error: "Too Many Requests" }), {
         status: 429,
@@ -67,7 +83,9 @@ export async function POST(request: Request) {
   }
 
   // Log the request
+  const logRequestSpan = trace.span({ name: "db-log-request", input: { userId: user.id } });
   await db.insert(userRequests).values({ userId: user.id });
+  logRequestSpan.end({ output: "logged" });
 
   const { messages, chatId, isNewChat } = await request.json() as {
     messages: Array<Message>;
@@ -85,19 +103,18 @@ export async function POST(request: Request) {
     ? firstUserMessage.slice(0, 100)
     : 'New Chat';
 
+  const upsertChatSpan = trace.span({ name: "db-upsert-chat", input: { userId: user.id, chatId: currentChatId, title: chatTitle, messages } });
   await upsertChat({
     userId: user.id,
     chatId,
     title: chatTitle,
     messages,
   });
+  upsertChatSpan.end({ output: "upserted" });
+  // Update trace sessionId after chat creation
+  trace.update({ sessionId: currentChatId });
 
-  // Create Langfuse trace for this chat session
-  const trace = langfuse.trace({
-    sessionId: currentChatId,
-    name: "chat",
-    userId: user.id,
-  });
+
 
   return createDataStreamResponse({
     execute: async (dataStream) => {
@@ -196,12 +213,14 @@ Also, always use the current date in your answers when users ask for up-to-date 
             });
 
             // Update the chat with all messages including the AI response
+            const upsertChatFinishSpan = trace.span({ name: "db-upsert-chat-finish", input: { userId: user.id, chatId, title: chatTitle, messages: updatedMessages } });
             await upsertChat({
               userId: user.id,
               chatId,
               title: chatTitle,
               messages: updatedMessages,
             });
+            upsertChatFinishSpan.end({ output: "upserted" });
           }
           await langfuse.flushAsync();
         },
