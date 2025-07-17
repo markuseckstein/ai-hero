@@ -128,6 +128,7 @@ export async function POST(request: Request) {
                 title: result.title,
                 link: result.link,
                 snippet: result.snippet,
+                date: result.date,
               }));
             },
           },
@@ -165,7 +166,7 @@ export async function POST(request: Request) {
 4. If you're unsure about something, search the web to verify
 5. When providing information, always include the source where you found it using markdown links
 6. Never include raw URLs - always use markdown link format
-7. When users ask for up-to-date information, use the current date to provide context about how recent the information is
+7. When users ask for up-to-date information, use the current date to provide context about how recent the information is. The current date and time is: ${new Date().toLocaleString()}.
 8. You have access to a tool called scrapePages. ALWAYS use scrapePages to extract the full text content of any web page you find in search results, not just the snippet. scrapePages takes a list of URLs and returns the full page content in markdown format. If scraping is not allowed, you will receive an error message for that URL.
 
 Your workflow should be:
@@ -177,7 +178,8 @@ Your workflow should be:
 Remember to:
 - Always scrape multiple sources (4-6) to ensure diverse perspectives
 - use the searchWeb tool to get the full content of those URLs
-- use the full content of a page to provide detailed, accurate answers`,
+- use the full content of a page to provide detailed, accurate answers
+Also, always use the current date in your answers when users ask for up-to-date information.`,
         maxSteps: 10,
         experimental_telemetry: {
           isEnabled: true,
