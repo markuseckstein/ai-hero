@@ -17,7 +17,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache"
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
+    "evals": "evalite watch"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.22",
@@ -61,12 +62,13 @@
     "@typescript-eslint/eslint-plugin": "^8.1.0",
     "@typescript-eslint/parser": "^8.1.0",
     "autoevals": "^0.0.119",
-    "dotenv": "^16.4.7",
+    "config": "link:@types/vitest/config",
+    "dotenv": "^16.6.1",
     "drizzle-kit": "^0.24.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "^15.0.1",
     "eslint-plugin-drizzle": "^0.2.3",
-    "evalite": "https://pkg.pr.new/mattpocock/evalite@120",
+    "evalite": "^0.9.1",
     "postcss": "^8.4.39",
     "prettier": "^3.3.2",
     "prettier-plugin-tailwindcss": "^0.6.5",
@@ -74,7 +76,7 @@
     "tailwindcss": "^3.4.3",
     "typescript": "^5.8.2",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.0.5"
+    "vitest": "^3.2.4"
   },
   "ct3aMetadata": {
     "initVersion": "7.38.1"

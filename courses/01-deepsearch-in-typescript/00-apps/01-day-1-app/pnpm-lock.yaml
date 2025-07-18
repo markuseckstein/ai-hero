@@ -126,8 +126,11 @@ importers:
       autoevals:
         specifier: ^0.0.119
         version: 0.0.119
+      config:
+        specifier: link:@types/vitest/config
+        version: link:@types/vitest/config
       dotenv:
-        specifier: ^16.4.7
+        specifier: ^16.6.1
         version: 16.6.1
       drizzle-kit:
         specifier: ^0.24.0
@@ -142,7 +145,7 @@ importers:
         specifier: ^0.2.3
         version: 0.2.3(eslint@8.57.1)
       evalite:
-        specifier: https://pkg.pr.new/mattpocock/evalite@120
+        specifier: ^0.9.1
         version: https://pkg.pr.new/mattpocock/evalite@120
       postcss:
         specifier: ^8.4.39
@@ -166,7 +169,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(typescript@5.8.3)(vite@7.0.5(@types/node@20.19.8)(jiti@1.21.7)(yaml@2.8.0))
       vitest:
-        specifier: ^3.0.5
+        specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@20.19.8)(jiti@1.21.7)(yaml@2.8.0)
 
 packages:
