@@ -134,10 +134,11 @@ export const crawlWebsite = cacheWithRedis(
   "crawlWebsite",
   async (options: CrawlOptions & { url: string }): Promise<CrawlResponse> => {
     const { url, maxRetries = DEFAULT_MAX_RETRIES } = options;
-
+    console.log(`Crawling website: ${url}`);
     // Check robots.txt before attempting to crawl
     const isAllowed = await checkRobotsTxt(url);
     if (!isAllowed) {
+      console.warn(`Crawling not allowed by robots.txt for: ${url}`);
       return {
         success: false,
         error: `Crawling not allowed by robots.txt for: ${url}`,

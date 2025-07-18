@@ -12,6 +12,7 @@ import { eq, and, gte, lt } from "drizzle-orm";
 import { upsertChat } from "~/server/db/chats";
 import { Langfuse } from "langfuse";
 import { env } from "~/env";
+import { checkRateLimit, recordRateLimit, type RateLimitConfig } from "~/server/redis/rate-limit";
 
 export const maxDuration = 60;
 
@@ -20,8 +21,34 @@ const langfuse = new Langfuse({
 });
 
 
+const config: RateLimitConfig = {
+  maxRequests: 4,
+  maxRetries: 3,
+  windowMs: 20_000,
+  keyPrefix: "chat",
+};
+
 
 export async function POST(request: Request) {
+
+  // Check the rate limit
+  const rateLimitCheck = await checkRateLimit(config);
+
+  if (!rateLimitCheck.allowed) {
+    console.log("Rate limit exceeded, waiting...");
+    const isAllowed = await rateLimitCheck.retry();
+    // If the rate limit is still exceeded, return a 429
+    if (!isAllowed) {
+      return new Response("Rate limit exceeded", {
+        status: 429,
+      });
+    }
+
+
+  }
+
+  // Record the request
+  await recordRateLimit(config);
 
   const trace = langfuse.trace({
     sessionId: "chat",
