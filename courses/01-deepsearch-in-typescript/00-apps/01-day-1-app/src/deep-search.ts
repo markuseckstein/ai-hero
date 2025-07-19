@@ -5,6 +5,14 @@ import { bulkCrawlWebsites } from "./server/scraper";
 import z from "zod";
 
 
+const planningInstructions = `
+Before you answer the question, you should devise a plan to answer the question. Your plan should be a list of steps.
+
+You should then execute the plan by calling the tools available to you.
+
+If you receive new information which changes your plan, you should update your plan and execute the new plan.
+`;
+
 const formattingInstructions = `
 # Markdown Link Formatting Instructions
 
@@ -81,6 +89,7 @@ If the user asks about a person and you don't know the answer, say that you don'
 const systemPrompt = `${generalInstructions}
 ${formattingInstructions}
 ${specialInstructions}
+${planningInstructions}
 `;
 
 export const streamFromDeepSearch = (opts: {
