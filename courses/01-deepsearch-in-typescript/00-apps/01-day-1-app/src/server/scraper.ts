@@ -5,8 +5,8 @@ import TurndownService from "turndown";
 import { cacheWithRedis } from "~/server/redis/redis";
 
 export const DEFAULT_MAX_RETRIES = 3;
-const MIN_DELAY_MS = 500; // 0.5 seconds
-const MAX_DELAY_MS = 8000; // 8 seconds
+const MIN_DELAY_MS = 250;
+const MAX_DELAY_MS = 4000; 
 
 export interface CrawlSuccessResponse {
   success: true;

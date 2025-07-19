@@ -1,84 +1,37 @@
 import { evalite } from "evalite";
 import { askDeepSearch } from "~/deep-search";
 import type { Message } from "ai";
+import { Factuality } from "./factuality.scorer";
+import { MarkdownLinkScorer } from "./markdown-link.scorer";
+import { devData } from "./dev";
+import { ciData } from "./ci";
+import { regressionData } from "./regression";
+import { env } from "~/env";
+
+
+let data = [...devData];
+if (env.EVAL_DATASET === "ci") {
+  data.push(...ciData);
+} else if (env.EVAL_DATASET === "regression") {
+  data.push(...ciData, ...regressionData);
+}
 
 evalite("Deep Search Eval", {
-  data: async (): Promise<{ input: Message[] }[]> => {
-    return [
-      {
-        input: [
-          {
-            id: "1",
-            role: "user",
-            content:
-              "What is the latest version of TypeScript?",
-          },
-        ],
-      },
-      {
-        input: [
-          {
-            id: "2",
-            role: "user",
-            content:
-              "What are the main features of Next.js 15?",
-          },
-        ],
-      },
-      {
-        input: [
-          {
-            id: "3",
-            role: "user",
-            content:
-              "List three popular React UI libraries.",
-          },
-        ],
-      },
-      {
-        input: [
-          {
-            id: "4",
-            role: "user",
-            content:
-              "Who maintains the Drizzle ORM project?",
-          },
-        ],
-      },
-      {
-        input: [
-          {
-            id: "5",
-            role: "user",
-            content:
-              "Summarize the main differences between Next.js and Remix.",
-          },
-        ],
-      },
-      {
-        input: [
-          {
-            id: "6",
-            role: "user",
-            content:
-              "What is the purpose of the evalite framework?",
-          },
-        ],
-      },
-    ];
-  },
+  data: () => data,
   task: async (input) => {
-    return askDeepSearch(input);
+    const messages: Message[] = [{
+      id: "1",
+      role: "user",
+      content: input
+    }];
+    return askDeepSearch(messages);
   },
   scorers: [
-    {
-      name: "Contains Links",
-      description: "Checks if the output contains any markdown links.",
-      scorer: ({ output }) => {
-        // Markdown link: [text](url)
-        const containsLinks = /\[[^\]]+\]\([^\)]+\)/.test(output);
-        return containsLinks ? 1 : 0;
-      },
-    },
+    MarkdownLinkScorer,
+    Factuality
   ],
 });
+
+
+
+

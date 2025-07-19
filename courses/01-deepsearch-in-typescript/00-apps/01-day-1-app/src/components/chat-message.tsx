@@ -37,6 +37,9 @@ const components: Components = {
   ),
 };
 
+
+import React, { useState } from "react";
+
 const ToolInvocation = ({
   part,
 }: {
@@ -45,6 +48,9 @@ const ToolInvocation = ({
   if (part.type !== "tool-invocation") return null;
   const { toolInvocation } = part;
   const { state, toolName, toolCallId, args } = toolInvocation;
+  const [showResult, setShowResult] = useState(false);
+  const resultString = toolInvocation.state === "result" && toolInvocation.result ? JSON.stringify(toolInvocation.result, null, 2) : "";
+  const isLarge = resultString.length > 800;
   return (
     <div
       className="my-2 rounded bg-gray-700 p-2 text-xs text-gray-200"
@@ -59,9 +65,25 @@ const ToolInvocation = ({
       {toolInvocation.state === "result" && toolInvocation.result && (
         <>
           <span className="text-gray-400">Result:</span> <br />
-          <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-all rounded bg-gray-800 p-2 text-gray-300">
-            {JSON.stringify(toolInvocation.result, null, 2)}
-          </pre>
+          {isLarge ? (
+            <div>
+              <button
+                className="mb-2 rounded bg-gray-600 px-2 py-1 text-xs text-blue-300 hover:bg-gray-500 focus:outline-none"
+                onClick={() => setShowResult((v) => !v)}
+              >
+                {showResult ? "Hide" : `Show (${resultString.length} chars)`} Result
+              </button>
+              {showResult && (
+                <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-all rounded bg-gray-800 p-2 text-gray-300">
+                  {resultString}
+                </pre>
+              )}
+            </div>
+          ) : (
+            <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-all rounded bg-gray-800 p-2 text-gray-300">
+              {resultString}
+            </pre>
+          )}
         </>
       )}
     </div>
