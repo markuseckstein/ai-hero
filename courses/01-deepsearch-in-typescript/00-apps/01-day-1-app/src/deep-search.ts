@@ -1,6 +1,7 @@
 import { streamText, type Message, type TelemetrySettings } from "ai";
 import { model } from "~/model";
 import { searchSerper } from "./serper";
+import { env } from "~/env";
 import { bulkCrawlWebsites } from "./server/scraper";
 import z from "zod";
 
@@ -68,13 +69,13 @@ const generalInstructions = `You are a helpful AI assistant with access to real-
 
 
 Your workflow should be:
-1. ALWAYS use searchWeb to find 10 relevant URLs from diverse sources (news sites, blogs, official documentation, etc.). Don't use URLs from facebook.com
+1. ALWAYS use searchWeb to find ${env.SEARCH_RESULTS_COUNT} relevant URLs from diverse sources (news sites, blogs, official documentation, etc.). Don't use URLs from facebook.com
 2. Select 4-6 of the most relevant and diverse URLs to scrape
 3. ALWAYS use scrapePages to get full page content of those URLs
 4. Use the full content to provide detailed, accurate answers
 
 Remember to:
-- Always scrape multiple sources (4-6) to ensure diverse perspectives
+- Always scrape multiple sources to ensure diverse perspectives
 - use the searchWeb tool to get the full content of those URLs
 - use the full content of a page to provide detailed, accurate answers
 Also, always use the current date in your answers when users ask for up-to-date information.`;
@@ -110,7 +111,7 @@ export const streamFromDeepSearch = (opts: {
                 execute: async ({ query }, { abortSignal }) => {
                     console.log("Searching web for query:", query);
                     const results = await searchSerper(
-                        { q: query, num: 10 },
+                        { q: query, num: env.SEARCH_RESULTS_COUNT },
                         abortSignal,
                     );
                     return results.organic.map((result) => ({
