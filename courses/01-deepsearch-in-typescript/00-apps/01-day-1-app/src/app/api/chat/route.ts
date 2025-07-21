@@ -159,22 +159,22 @@ export async function POST(request: Request) {
       const result = await streamFromDeepSearch({
         messages,
         onFinish: async ({ response }) => {
-          if (response?.messages) {
-            const updatedMessages = appendResponseMessages({
-              messages,
-              responseMessages: response.messages,
-            });
-            // Update the chat with all messages including the AI response
-            const upsertChatFinishSpan = trace.span({ name: "db-upsert-chat-finish", input: { userId: user.id, chatId, title: chatTitle, messages: updatedMessages } });
-            await upsertChat({
-              userId: user.id,
-              chatId,
-              title: chatTitle,
-              messages: updatedMessages,
-            });
-            upsertChatFinishSpan.end({ output: "upserted" });
-          }
-          await langfuse.flushAsync();
+          // if (response?.messages) {
+          //   const updatedMessages = appendResponseMessages({
+          //     messages,
+          //     responseMessages: response.messages,
+          //   });
+          //   // Update the chat with all messages including the AI response
+          //   const upsertChatFinishSpan = trace.span({ name: "db-upsert-chat-finish", input: { userId: user.id, chatId, title: chatTitle, messages: updatedMessages } });
+          //   await upsertChat({
+          //     userId: user.id,
+          //     chatId,
+          //     title: chatTitle,
+          //     messages: updatedMessages,
+          //   });
+          //   upsertChatFinishSpan.end({ output: "upserted" });
+          // }
+          // await langfuse.flushAsync();
         },
         telemetry: {
           isEnabled: true,

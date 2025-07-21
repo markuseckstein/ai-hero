@@ -1,4 +1,5 @@
-import { streamText, type Message, type TelemetrySettings } from "ai";
+import { streamText, type Message, type TelemetrySettings, type StreamTextResult } from "ai";
+import { runAgentLoop } from "./run-agent-loop";
 import { model } from "~/model";
 import { searchSerper } from "./serper";
 import { env } from "~/env";
@@ -93,67 +94,19 @@ ${specialInstructions}
 ${planningInstructions}
 `;
 
-export const streamFromDeepSearch = (opts: {
-    messages: Message[];
-    onFinish: Parameters<typeof streamText>[0]["onFinish"];
-    telemetry: TelemetrySettings;
-}) =>
-    streamText({
-        model,
-        messages: opts.messages,
-        maxSteps: 10,
-        system: systemPrompt,
-        tools: {
-            searchWeb: {
-                parameters: z.object({
-                    query: z.string().describe("The query to search the web for"),
-                }),
-                execute: async ({ query }, { abortSignal }) => {
-                    console.log("Searching web for query:", query);
-                    const results = await searchSerper(
-                        { q: query, num: env.SEARCH_RESULTS_COUNT },
-                        abortSignal,
-                    );
-                    return results.organic.map((result) => ({
-                        title: result.title,
-                        link: result.link,
-                        snippet: result.snippet,
-                        date: result.date,
-                    }));
-                },
-            },
-            scrapePages: {
-                parameters: z.object({
-                    urls: z.array(z.string()).describe("List of URLs to scrape for full page content in markdown format"),
-                }),
-                execute: async ({ urls }, { abortSignal }) => {
-                    const crawlResults = await bulkCrawlWebsites({ urls });
-                    if (!crawlResults.success) {
-                        return {
-                            error: crawlResults.error,
-                            results: crawlResults.results.map(r => (
-                                {
-                                    url: r.url,
-                                    data: r.result.success ? r.result.data : `Error: ${(r.result as any).error}`,
-                                }))
-                        }
+export function streamFromDeepSearch(opts: {
+  messages: Message[];
+  onFinish: Parameters<typeof streamText>[0]["onFinish"];
+  telemetry: TelemetrySettings;
+}): Promise<StreamTextResult<{}, string>> {
+  // Use the first user message as the initial question
+  const initialQuestion = opts.messages.find(m => m.role === "user")?.content || "";
+  return runAgentLoop(initialQuestion);
+}
 
-                    }
-                    return {
-                        results: crawlResults.results.map(r => ({
-                            url: r.url,
-                            data: r.result.data
-                        }))
-                    }
-                },
-            },
-        },
-        onFinish: opts.onFinish,
-        experimental_telemetry: opts.telemetry,
-    });
-
-export async function askDeepSearch(messages: Message[]) {
-    const result = streamFromDeepSearch({
+export async function askDeepSearch(messages: Message[]): Promise<string> {
+    
+    const result = await streamFromDeepSearch({
         messages,
         onFinish: () => { }, // stub for evaluation
         telemetry: {

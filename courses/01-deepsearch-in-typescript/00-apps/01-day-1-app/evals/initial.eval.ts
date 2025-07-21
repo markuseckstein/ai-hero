@@ -25,7 +25,9 @@ evalite("Deep Search Eval", {
       role: "user",
       content: input
     }];
-    return askDeepSearch(messages);
+    const result = askDeepSearch(messages);
+    console.log("askDeepSearch result:", result);
+    return result;
   },
   scorers: [
     MarkdownLinkScorer,

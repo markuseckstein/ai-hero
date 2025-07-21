@@ -89,6 +89,7 @@ export const searchSerper = async (
   body: SerperTool.SearchInput,
   signal: AbortSignal | undefined,
 ) => {
+  console.log("Searching Serper with '" + body.q + "'");
   const results = await fetchFromSerper(`/search`, {
     method: "POST",
     body: JSON.stringify(body),
