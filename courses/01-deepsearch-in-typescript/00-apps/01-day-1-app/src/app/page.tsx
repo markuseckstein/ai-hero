@@ -18,7 +18,6 @@ export default async function HomePage({
 
   // Generate a stable chatId for new chats
   const chatId = chatIdFromUrl ?? crypto.randomUUID();
-  const isNewChat = !chatIdFromUrl;
 
   // Fetch the list of chats for the sidebar
   const userChats =

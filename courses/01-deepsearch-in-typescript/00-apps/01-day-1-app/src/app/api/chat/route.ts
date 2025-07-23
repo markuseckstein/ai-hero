@@ -1,17 +1,13 @@
 import type { Message } from "ai";
-import { createDataStreamResponse, appendResponseMessages } from "ai";
-import { streamFromDeepSearch } from "~/deep-search";
-import { model } from "~/model";
-import { auth } from "~/server/auth";
-import { searchSerper } from "~/serper";
-import { bulkCrawlWebsites } from "~/server/scraper";
-import { z } from "zod";
-import { db } from "~/server/db";
-import { users, userRequests } from "~/server/db/schema";
-import { eq, and, gte, lt } from "drizzle-orm";
-import { upsertChat } from "~/server/db/chats";
+import { createDataStreamResponse } from "ai";
+import { and, eq, gte, lt } from "drizzle-orm";
 import { Langfuse } from "langfuse";
+import { streamFromDeepSearch } from "~/deep-search";
 import { env } from "~/env";
+import { auth } from "~/server/auth";
+import { db } from "~/server/db";
+import { upsertChat } from "~/server/db/chats";
+import { userRequests, users } from "~/server/db/schema";
 import {
   checkRateLimit,
   recordRateLimit,

@@ -1,15 +1,11 @@
 import {
-  streamText,
   type Message,
-  type TelemetrySettings,
+  type streamText,
   type StreamTextResult,
+  type TelemetrySettings,
 } from "ai";
-import { runAgentLoop } from "./run-agent-loop";
-import { model } from "~/model";
-import { searchSerper } from "./serper";
 import { env } from "~/env";
-import { bulkCrawlWebsites } from "./server/scraper";
-import z from "zod";
+import { runAgentLoop } from "./run-agent-loop";
 
 const planningInstructions = `
 Before you answer the question, you should devise a plan to answer the question. Your plan should be a list of steps.

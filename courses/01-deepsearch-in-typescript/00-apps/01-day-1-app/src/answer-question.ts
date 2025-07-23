@@ -1,6 +1,6 @@
-import { SystemContext } from "./system-context";
-import { generateText, streamText, type StreamTextResult } from "ai";
+import { streamText, type StreamTextResult } from "ai";
 import { model } from "./model";
+import { type SystemContext } from "./system-context";
 
 export function answerQuestion(
   ctx: SystemContext,

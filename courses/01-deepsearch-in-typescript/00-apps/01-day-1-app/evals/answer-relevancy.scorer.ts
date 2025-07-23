@@ -194,7 +194,7 @@ function verdictToScore(verdict: string): number {
   return scores[verdict as keyof typeof scores] ?? 0;
 }
 
-export const AnswerRelevancy = createScorer<string, string, string>({
+export const AnswerRelevancy = createScorer<string, string>({
   name: "AnswerRelevancy",
   scorer: async ({ input, expected, output }) => {
     // Step 1: Break output into statements

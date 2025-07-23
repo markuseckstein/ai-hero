@@ -1,9 +1,6 @@
-import type { Evalite } from "evalite";
+import { createScorer } from "evalite";
 
-export const MarkdownLinkScorer = <
-  | Evalite.ScorerOpts<string, string, string>
-  | Evalite.Scorer<string, string, string>
->{
+export const MarkdownLinkScorer = createScorer<string, string>({
   name: "Contains Links",
   description: "Checks if the output contains any markdown links.",
   scorer: ({ output }) => {
@@ -11,4 +8,4 @@ export const MarkdownLinkScorer = <
     const containsLinks = /\[[^\]]+\]\([^\)]+\)/.test(output);
     return containsLinks ? 1 : 0;
   },
-};
+});

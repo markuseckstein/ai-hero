@@ -1,11 +1,9 @@
-import { SystemContext, getNextAction } from "./system-context";
-import type { QueryResult, ScrapeResult, Action } from "./system-context";
 import { answerQuestion } from "./answer-question";
-import { model } from "./model";
-import { searchSerper } from "./serper";
 import { env } from "./env";
+import { searchSerper } from "./serper";
 import { bulkCrawlWebsites } from "./server/scraper";
-import type { StreamTextResult } from "ai";
+import type { QueryResult, ScrapeResult } from "./system-context";
+import { SystemContext, getNextAction } from "./system-context";
 
 // Copy-paste of searchWeb tool logic
 export async function searchWeb(query: string): Promise<QueryResult> {

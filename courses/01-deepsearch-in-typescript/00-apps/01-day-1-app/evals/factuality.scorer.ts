@@ -63,7 +63,7 @@ export const checkFactuality = async (opts: {
 };
 
 // This is the scorer that can be passed into the scorers in Evalite
-export const Factuality = createScorer<string, string, string>({
+export const Factuality = createScorer<string, string>({
   name: "Factuality",
   scorer: async ({ input, expected, output }) => {
     return checkFactuality({

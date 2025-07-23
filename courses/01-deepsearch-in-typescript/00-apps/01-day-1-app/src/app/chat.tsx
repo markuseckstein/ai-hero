@@ -1,16 +1,16 @@
 "use client";
 
-import { ChatMessage } from "~/components/chat-message";
-import { SignInModal } from "~/components/sign-in-modal";
 import { useChat } from "@ai-sdk/react";
+import type { Message } from "ai";
 import { Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useSignInModal } from "~/components/use-sign-in-modal";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { isNewChatCreated } from "~/utils";
-import type { Message } from "ai";
 import { StickToBottom } from "use-stick-to-bottom";
+import { ChatMessage } from "~/components/chat-message";
+import { SignInModal } from "~/components/sign-in-modal";
+import { useSignInModal } from "~/components/use-sign-in-modal";
+import { isNewChatCreated } from "~/utils";
 
 interface ChatProps {
   userName: string;
@@ -28,7 +28,6 @@ export const ChatPage = ({
   initialMessages,
 }: ChatProps) => {
   const router = useRouter();
-  const { data: session } = useSession();
 
   const { isOpen, open, close } = useSignInModal();
 

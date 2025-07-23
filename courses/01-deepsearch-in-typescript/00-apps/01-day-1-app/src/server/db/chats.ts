@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
 import type { Message } from "ai";
+import { and, eq } from "drizzle-orm";
 import { db } from ".";
-import { chats, messages, type DB } from "./schema";
+import { chats, messages } from "./schema";
 
 export const upsertChat = async (opts: {
   userId: string;
