@@ -9,7 +9,6 @@ import { ciData } from "./ci";
 import { regressionData } from "./regression";
 import { env } from "~/env";
 
-
 let data = [...devData];
 if (env.EVAL_DATASET === "ci") {
   data.push(...ciData);
@@ -20,22 +19,16 @@ if (env.EVAL_DATASET === "ci") {
 evalite("Deep Search Eval", {
   data: () => data,
   task: async (input) => {
-    const messages: Message[] = [{
-      id: "1",
-      role: "user",
-      content: input
-    }];
+    const messages: Message[] = [
+      {
+        id: "1",
+        role: "user",
+        content: input,
+      },
+    ];
     const result = askDeepSearch(messages);
     console.log("askDeepSearch result:", result);
     return result;
   },
-  scorers: [
-    MarkdownLinkScorer,
-    Factuality,
-    AnswerRelevancy
-  ],
+  scorers: [MarkdownLinkScorer, Factuality, AnswerRelevancy],
 });
-
-
-
-

@@ -21,15 +21,16 @@ export default async function HomePage({
   const isNewChat = !chatIdFromUrl;
 
   // Fetch the list of chats for the sidebar
-  const userChats = isAuthenticated && session.user.id
-    ? await getChats({ userId: session.user.id })
-    : [];
+  const userChats =
+    isAuthenticated && session.user.id
+      ? await getChats({ userId: session.user.id })
+      : [];
 
   // Fetch the active chat if there's an ID
   let initialMessages: Message[] | undefined;
   if (chatId && isAuthenticated && session.user.id) {
     const chat = await getChat({ userId: session.user.id, chatId });
-    
+
     if (chat?.messages) {
       initialMessages = chat.messages.map((msg) => ({
         id: msg.id,
@@ -38,7 +39,6 @@ export default async function HomePage({
         parts: msg.content as Message["parts"],
       }));
     }
-
 
     // console.log("Fetched chat:", { chat, initialMessages });
   }
@@ -67,10 +67,11 @@ export default async function HomePage({
               <div key={chat.id} className="flex items-center gap-2">
                 <Link
                   href={`/?id=${chat.id}`}
-                  className={`flex-1 rounded-lg p-3 text-left text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 ${chat.id === chatId
-                    ? "bg-gray-700"
-                    : "hover:bg-gray-750 bg-gray-800"
-                    }`}
+                  className={`flex-1 rounded-lg p-3 text-left text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                    chat.id === chatId
+                      ? "bg-gray-700"
+                      : "hover:bg-gray-750 bg-gray-800"
+                  }`}
                 >
                   {chat.title}
                 </Link>
@@ -90,8 +91,6 @@ export default async function HomePage({
             userImage={session?.user?.image}
           />
         </div>
-        
-
       </div>
 
       <ChatPage

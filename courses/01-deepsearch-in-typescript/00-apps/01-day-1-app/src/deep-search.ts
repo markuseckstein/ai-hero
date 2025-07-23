@@ -1,11 +1,15 @@
-import { streamText, type Message, type TelemetrySettings, type StreamTextResult } from "ai";
+import {
+  streamText,
+  type Message,
+  type TelemetrySettings,
+  type StreamTextResult,
+} from "ai";
 import { runAgentLoop } from "./run-agent-loop";
 import { model } from "~/model";
 import { searchSerper } from "./serper";
 import { env } from "~/env";
 import { bulkCrawlWebsites } from "./server/scraper";
 import z from "zod";
-
 
 const planningInstructions = `
 Before you answer the question, you should devise a plan to answer the question. Your plan should be a list of steps.
@@ -55,7 +59,6 @@ Follow this format consistently throughout your response.
 
 `;
 
-
 const generalInstructions = `You are a helpful AI assistant with access to real-time web search capabilities. When answering questions:
 
 1. ALWAYS search the web for up-to-date information when relevant
@@ -81,7 +84,6 @@ Remember to:
 - use the full content of a page to provide detailed, accurate answers
 Also, always use the current date in your answers when users ask for up-to-date information.`;
 
-
 const specialInstructions = `
 For any information about football transfer news, prioritize sources from David Ornstein and Fabrizio Romano. If you can't find the information from them, use other sources.
 
@@ -100,21 +102,19 @@ export function streamFromDeepSearch(opts: {
   telemetry: TelemetrySettings;
 }): Promise<StreamTextResult<{}, string>> {
   // Use the first user message as the initial question
-  const initialQuestion = opts.messages.find(m => m.role === "user")?.content || "";
+  const initialQuestion =
+    opts.messages.find((m) => m.role === "user")?.content || "";
   return runAgentLoop(initialQuestion);
 }
 
 export async function askDeepSearch(messages: Message[]): Promise<string> {
-    
-    const result = await streamFromDeepSearch({
-        messages,
-        onFinish: () => { }, // stub for evaluation
-        telemetry: {
-            isEnabled: false,
-        },
-    });
-    await result.consumeStream();
-    return await result.text;
+  const result = await streamFromDeepSearch({
+    messages,
+    onFinish: () => {}, // stub for evaluation
+    telemetry: {
+      isEnabled: false,
+    },
+  });
+  await result.consumeStream();
+  return await result.text;
 }
-
-

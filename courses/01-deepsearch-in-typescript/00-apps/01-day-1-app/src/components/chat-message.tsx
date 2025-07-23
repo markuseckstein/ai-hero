@@ -37,7 +37,6 @@ const components: Components = {
   ),
 };
 
-
 import React, { useState } from "react";
 
 const ToolInvocation = ({
@@ -49,7 +48,10 @@ const ToolInvocation = ({
   const { toolInvocation } = part;
   const { state, toolName, toolCallId, args } = toolInvocation;
   const [showResult, setShowResult] = useState(false);
-  const resultString = toolInvocation.state === "result" && toolInvocation.result ? JSON.stringify(toolInvocation.result, null, 2) : "";
+  const resultString =
+    toolInvocation.state === "result" && toolInvocation.result
+      ? JSON.stringify(toolInvocation.result, null, 2)
+      : "";
   const isLarge = resultString.length > 800;
   return (
     <div
@@ -71,7 +73,8 @@ const ToolInvocation = ({
                 className="mb-2 rounded bg-gray-600 px-2 py-1 text-xs text-blue-300 hover:bg-gray-500 focus:outline-none"
                 onClick={() => setShowResult((v) => !v)}
               >
-                {showResult ? "Hide" : `Show (${resultString.length} chars)`} Result
+                {showResult ? "Hide" : `Show (${resultString.length} chars)`}{" "}
+                Result
               </button>
               {showResult && (
                 <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-all rounded bg-gray-800 p-2 text-gray-300">
@@ -108,16 +111,18 @@ export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
           {isAI ? "AI" : userName}
         </p>
         <div className="prose prose-invert max-w-none">
-          {parts && parts.length && parts.map((part, idx) => {
-            if (part.type === "text") {
-              return <Markdown key={idx}>{part.text}</Markdown>;
-            }
-            if (part.type === "tool-invocation") {
-              return <ToolInvocation key={idx} part={part} />;
-            }
-            // You can add more part types here as needed
-            return null;
-          })}
+          {parts &&
+            parts.length &&
+            parts.map((part, idx) => {
+              if (part.type === "text") {
+                return <Markdown key={idx}>{part.text}</Markdown>;
+              }
+              if (part.type === "tool-invocation") {
+                return <ToolInvocation key={idx} part={part} />;
+              }
+              // You can add more part types here as needed
+              return null;
+            })}
         </div>
       </div>
     </div>

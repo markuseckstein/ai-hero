@@ -114,8 +114,12 @@ export const verificationTokens = createTable(
 
 export const userRequests = createTable("user_request", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id", { length: 255 }).notNull().references(() => users.id),
-  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
 export const userRequestsRelations = relations(userRequests, ({ one }) => ({
@@ -124,7 +128,9 @@ export const userRequestsRelations = relations(userRequests, ({ one }) => ({
 
 export const chats = createTable("chat", {
   id: varchar("id", { length: 255 }).notNull().primaryKey(),
-  userId: varchar("user_id", { length: 255 }).notNull().references(() => users.id),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => users.id),
   title: varchar("title", { length: 255 }).notNull(),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
@@ -141,7 +147,9 @@ export const chatsRelations = relations(chats, ({ one, many }) => ({
 
 export const messages = createTable("message", {
   id: serial("id").primaryKey(),
-  chatId: varchar("chat_id", { length: 255 }).notNull().references(() => chats.id),
+  chatId: varchar("chat_id", { length: 255 })
+    .notNull()
+    .references(() => chats.id),
   role: varchar("role", { length: 50 }).notNull(),
   parts: json("parts").notNull(),
   order: integer("order").notNull(),

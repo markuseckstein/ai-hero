@@ -49,7 +49,13 @@ Key Principles:
 5. Empty inputs or error messages should always be marked as "no"
 6. Responses that discuss the type of information being asked show partial relevance`;
 
-function generateEvaluatePrompt({ input, statements }: { input: string; statements: string[] }) {
+function generateEvaluatePrompt({
+  input,
+  statements,
+}: {
+  input: string;
+  statements: string[];
+}) {
   return `Evaluate each statement's relevance to the input question, considering direct answers, related context, and uncertain cases.
 
     Return JSON with array of verdict objects. Each verdict must include:
@@ -211,14 +217,16 @@ export const AnswerRelevancy = createScorer<string, string, string>({
           z.object({
             verdict: z.enum(["yes", "no", "unsure"]),
             reason: z.string(),
-          })
+          }),
         ),
       }),
     });
 
     // Step 3: Average the scores
-    const scores = verdictsObj.verdicts.map(v => verdictToScore(v.verdict));
-    const score = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    const scores = verdictsObj.verdicts.map((v) => verdictToScore(v.verdict));
+    const score = scores.length
+      ? scores.reduce((a, b) => a + b, 0) / scores.length
+      : 0;
 
     return {
       score,

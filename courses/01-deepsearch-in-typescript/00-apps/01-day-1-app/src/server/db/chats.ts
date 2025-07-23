@@ -23,7 +23,8 @@ export const upsertChat = async (opts: {
       }
 
       // Update the chat title and timestamps
-      await tx.update(chats)
+      await tx
+        .update(chats)
         .set({
           title: opts.title,
           updatedAt: new Date(),
@@ -31,8 +32,7 @@ export const upsertChat = async (opts: {
         .where(eq(chats.id, opts.chatId));
 
       // Delete all existing messages
-      await tx.delete(messages)
-        .where(eq(messages.chatId, opts.chatId));
+      await tx.delete(messages).where(eq(messages.chatId, opts.chatId));
     } else {
       // Create a new chat
       await tx.insert(chats).values({
@@ -50,7 +50,7 @@ export const upsertChat = async (opts: {
           role: message.role,
           parts: message.parts,
           order: index,
-        }))
+        })),
       );
     }
 

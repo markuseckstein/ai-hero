@@ -28,12 +28,14 @@ export async function searchWeb(query: string): Promise<QueryResult> {
 export async function scrapeUrl(urls: string[]): Promise<ScrapeResult[]> {
   const crawlResults = await bulkCrawlWebsites({ urls });
   if (!crawlResults.success) {
-    return crawlResults.results.map(r => ({
+    return crawlResults.results.map((r) => ({
       url: r.url,
-      result: r.result.success ? r.result.data : `Error: ${(r.result as any).error}`,
+      result: r.result.success
+        ? r.result.data
+        : `Error: ${(r.result as any).error}`,
     }));
   }
-  return crawlResults.results.map(r => ({
+  return crawlResults.results.map((r) => ({
     url: r.url,
     result: r.result.data,
   }));
@@ -41,7 +43,9 @@ export async function scrapeUrl(urls: string[]): Promise<ScrapeResult[]> {
 
 export async function runAgentLoop(initialQuestion: string) {
   const ctx = new SystemContext(initialQuestion);
-  console.log(`Starting agent loop with initial question: "${initialQuestion}"`);
+  console.log(
+    `Starting agent loop with initial question: "${initialQuestion}"`,
+  );
   while (!ctx.shouldStop()) {
     const nextAction = await getNextAction(ctx);
     console.log(`Next action (loop ${ctx.currentStep}):`, nextAction);
@@ -52,8 +56,7 @@ export async function runAgentLoop(initialQuestion: string) {
       const result = await scrapeUrl(nextAction.urls);
       ctx.reportScrapes(result);
     } else if (nextAction.type === "answer") {
-      
-        return answerQuestion(ctx);
+      return answerQuestion(ctx);
     }
     ctx.incrementStep();
   }

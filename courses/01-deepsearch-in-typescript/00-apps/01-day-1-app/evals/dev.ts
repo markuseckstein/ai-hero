@@ -1,7 +1,9 @@
 export const devData = [
   {
-    input: "What is the name and opening date of Nuremberg's airport? Also include the aviation codes.",
-    expected: "The name of Nuremberg's airport is Nuremberg Airport (Flughafen Nürnberg) or 'Albrecht Dürer Airport', and it opened on 6th April 1955. It's ICAO code is EDDN and IATA code is NUE.",
+    input:
+      "What is the name and opening date of Nuremberg's airport? Also include the aviation codes.",
+    expected:
+      "The name of Nuremberg's airport is Nuremberg Airport (Flughafen Nürnberg) or 'Albrecht Dürer Airport', and it opened on 6th April 1955. It's ICAO code is EDDN and IATA code is NUE.",
   },
   {
     input: "What is the latest version of TypeScript?",
@@ -13,10 +15,12 @@ export const devData = [
   },
   {
     input: "What is the outstanding feature of the Nuremberg Subway system?",
-    expected: "It is the first subway system in the world to be fully automated and driverless.",
+    expected:
+      "It is the first subway system in the world to be fully automated and driverless.",
   },
   {
     input: "Who cost more to sign, Bakayosaka or Gabriel Martinelli?",
-    expected: "Gabriel Martinelli was signed, but Bakayosaka actually wasn't because he came from Arsenal's academy.",
+    expected:
+      "Gabriel Martinelli was signed, but Bakayosaka actually wasn't because he came from Arsenal's academy.",
   },
 ];

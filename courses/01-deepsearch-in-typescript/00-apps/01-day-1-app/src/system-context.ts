@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 import { generateObject } from "ai";
 import { model } from "./model";
@@ -21,22 +20,15 @@ export type ScrapeResult = {
   result: string;
 };
 
-const toQueryResult = (
-  query: QueryResultSearchResult,
-) =>
-  [
-    `### ${query.date} - ${query.title}`,
-    query.url,
-    query.snippet,
-  ].join("\n\n");
+const toQueryResult = (query: QueryResultSearchResult) =>
+  [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
 
 export class SystemContext {
   private step = 0;
   private queryHistory: QueryResult[] = [];
   private scrapeHistory: ScrapeResult[] = [];
 
-  constructor(public readonly initialQuestion: string) {
-  }
+  constructor(public readonly initialQuestion: string) {}
 
   shouldStop() {
     return this.step >= 10;
@@ -83,9 +75,6 @@ export class SystemContext {
   }
 }
 
-
-
-
 export interface SearchAction {
   type: "search";
   query: string;
@@ -103,27 +92,27 @@ export interface AnswerAction {
 export type Action = SearchAction | ScrapeAction | AnswerAction;
 
 export const actionSchema = z.object({
-  type: z
-    .enum(["search", "scrape", "answer"])
-    .describe(
-      `The type of action to take.
+  type: z.enum(["search", "scrape", "answer"]).describe(
+    `The type of action to take.
        - 'search': Search the web for more information.
        - 'scrape': Scrape a URL.
        - 'answer': Answer the user's question and complete the loop.`,
-    ),
+  ),
   query: z
     .string()
-    .describe("The query to search for. Required if type is 'search', otherwise omit this field.")
+    .describe(
+      "The query to search for. Required if type is 'search', otherwise omit this field.",
+    )
     .optional(),
   urls: z
     .array(z.string())
-    .describe("The URLs to scrape. Required if type is 'scrape', otherwise omit this field.")
+    .describe(
+      "The URLs to scrape. Required if type is 'scrape', otherwise omit this field.",
+    )
     .optional(),
 });
 
-export const getNextAction = async (
-  context: SystemContext,
-) => {
+export const getNextAction = async (context: SystemContext) => {
   const result = await generateObject({
     model,
     schema: actionSchema,

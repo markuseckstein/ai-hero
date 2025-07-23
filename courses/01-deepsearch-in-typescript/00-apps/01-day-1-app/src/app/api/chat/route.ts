@@ -12,14 +12,17 @@ import { eq, and, gte, lt } from "drizzle-orm";
 import { upsertChat } from "~/server/db/chats";
 import { Langfuse } from "langfuse";
 import { env } from "~/env";
-import { checkRateLimit, recordRateLimit, type RateLimitConfig } from "~/server/redis/rate-limit";
+import {
+  checkRateLimit,
+  recordRateLimit,
+  type RateLimitConfig,
+} from "~/server/redis/rate-limit";
 
 export const maxDuration = 60;
 
 const langfuse = new Langfuse({
   environment: env.NODE_ENV,
 });
-
 
 const config: RateLimitConfig = {
   maxRequests: 4,
@@ -28,9 +31,7 @@ const config: RateLimitConfig = {
   keyPrefix: "chat",
 };
 
-
 export async function POST(request: Request) {
-
   // Check the rate limit
   const rateLimitCheck = await checkRateLimit(config);
 
@@ -43,8 +44,6 @@ export async function POST(request: Request) {
         status: 429,
       });
     }
-
-
   }
 
   // Record the request
@@ -53,7 +52,7 @@ export async function POST(request: Request) {
   const trace = langfuse.trace({
     sessionId: "chat",
     name: "chat",
-    userId: "anonymous"
+    userId: "anonymous",
   });
 
   // Check authentication
@@ -70,7 +69,10 @@ export async function POST(request: Request) {
   }
 
   // Fetch user from DB
-  const userSpan = trace.span({ name: "db-find-user", input: { userId: session.user.id } });
+  const userSpan = trace.span({
+    name: "db-find-user",
+    input: { userId: session.user.id },
+  });
   const user = await db.query.users.findFirst({
     where: eq(users.id, session.user.id),
   });
@@ -93,7 +95,10 @@ export async function POST(request: Request) {
   );
 
   if (!isAdmin) {
-    const rateLimitSpan = trace.span({ name: "db-rate-limit-check", input: { userId: user.id, startOfDay, endOfDay } });
+    const rateLimitSpan = trace.span({
+      name: "db-rate-limit-check",
+      input: { userId: user.id, startOfDay, endOfDay },
+    });
     const requests = await db.query.userRequests.findMany({
       where: and(
         eq(userRequests.userId, user.id),
@@ -111,11 +116,14 @@ export async function POST(request: Request) {
   }
 
   // Log the request
-  const logRequestSpan = trace.span({ name: "db-log-request", input: { userId: user.id } });
+  const logRequestSpan = trace.span({
+    name: "db-log-request",
+    input: { userId: user.id },
+  });
   await db.insert(userRequests).values({ userId: user.id });
   logRequestSpan.end({ output: "logged" });
 
-  const { messages, chatId, isNewChat } = await request.json() as {
+  const { messages, chatId, isNewChat } = (await request.json()) as {
     messages: Array<Message>;
     chatId: string;
     isNewChat?: boolean;
@@ -126,12 +134,21 @@ export async function POST(request: Request) {
 
   // Create or update the chat before streaming begins
   // Use the first message's content as the chat title
-  const firstUserMessage = messages.find(m => m.role === 'user')?.content;
-  const chatTitle = typeof firstUserMessage === 'string'
-    ? firstUserMessage.slice(0, 100)
-    : 'New Chat';
+  const firstUserMessage = messages.find((m) => m.role === "user")?.content;
+  const chatTitle =
+    typeof firstUserMessage === "string"
+      ? firstUserMessage.slice(0, 100)
+      : "New Chat";
 
-  const upsertChatSpan = trace.span({ name: "db-upsert-chat", input: { userId: user.id, chatId: currentChatId, title: chatTitle, messages } });
+  const upsertChatSpan = trace.span({
+    name: "db-upsert-chat",
+    input: {
+      userId: user.id,
+      chatId: currentChatId,
+      title: chatTitle,
+      messages,
+    },
+  });
   await upsertChat({
     userId: user.id,
     chatId,
@@ -142,8 +159,6 @@ export async function POST(request: Request) {
   // Update trace sessionId after chat creation
   trace.update({ sessionId: currentChatId });
 
-
-
   return createDataStreamResponse({
     execute: async (dataStream) => {
       // If this is a new chat, send the ID to the frontend
@@ -153,8 +168,6 @@ export async function POST(request: Request) {
           chatId,
         });
       }
-
-
 
       const result = await streamFromDeepSearch({
         messages,

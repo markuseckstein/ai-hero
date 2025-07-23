@@ -6,7 +6,7 @@ import { cacheWithRedis } from "~/server/redis/redis";
 
 export const DEFAULT_MAX_RETRIES = 3;
 const MIN_DELAY_MS = 250;
-const MAX_DELAY_MS = 4000; 
+const MAX_DELAY_MS = 4000;
 
 export interface CrawlSuccessResponse {
   success: true;
@@ -31,7 +31,9 @@ export interface BulkCrawlFailureResponse {
   error: string;
 }
 
-export type BulkCrawlResponse = BulkCrawlSuccessResponse | BulkCrawlFailureResponse;
+export type BulkCrawlResponse =
+  | BulkCrawlSuccessResponse
+  | BulkCrawlFailureResponse;
 
 export interface CrawlOptions {
   maxRetries?: number;
@@ -99,7 +101,9 @@ const checkRobotsTxt = async (url: string): Promise<boolean> => {
   }
 };
 
-export const bulkCrawlWebsites = async (options: BulkCrawlOptions): Promise<BulkCrawlResponse> => {
+export const bulkCrawlWebsites = async (
+  options: BulkCrawlOptions,
+): Promise<BulkCrawlResponse> => {
   const { urls, maxRetries = DEFAULT_MAX_RETRIES } = options;
 
   const results = await Promise.all(

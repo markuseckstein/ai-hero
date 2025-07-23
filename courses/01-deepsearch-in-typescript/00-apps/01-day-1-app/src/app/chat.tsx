@@ -20,14 +20,17 @@ interface ChatProps {
   initialMessages?: Message[];
 }
 
-export const ChatPage = ({ userName, chatId, isNewChat, isAuthenticated, initialMessages }: ChatProps) => {
+export const ChatPage = ({
+  userName,
+  chatId,
+  isNewChat,
+  isAuthenticated,
+  initialMessages,
+}: ChatProps) => {
   const router = useRouter();
   const { data: session } = useSession();
 
   const { isOpen, open, close } = useSignInModal();
-
-
-
 
   const {
     messages,
@@ -42,10 +45,13 @@ export const ChatPage = ({ userName, chatId, isNewChat, isAuthenticated, initial
     initialMessages,
   });
 
-
-  console.log("ChatPage rendered with:", { initialMessages, messages, input, data, isLoading });
-
-
+  console.log("ChatPage rendered with:", {
+    initialMessages,
+    messages,
+    input,
+    data,
+    isLoading,
+  });
 
   // Watch for new chat creation and redirect
   useEffect(() => {
@@ -68,9 +74,11 @@ export const ChatPage = ({ userName, chatId, isNewChat, isAuthenticated, initial
 
   return (
     <>
-      <div className="flex flex-1 flex-col mx-auto w-full max-w-[75ch] p-4" role="log"
-        aria-label="Chat messages">
-
+      <div
+        className="mx-auto flex w-full max-w-[75ch] flex-1 flex-col p-4"
+        role="log"
+        aria-label="Chat messages"
+      >
         <StickToBottom
           className="relative overflow-auto [&>div]:scrollbar-thin [&>div]:scrollbar-track-gray-800 [&>div]:scrollbar-thumb-gray-600 [&>div]:hover:scrollbar-thumb-gray-500"
           resize="smooth"
@@ -114,7 +122,6 @@ export const ChatPage = ({ userName, chatId, isNewChat, isAuthenticated, initial
             </div>
           </form>
         </div>
-
       </div>
 
       <SignInModal isOpen={isOpen} onClose={close} />

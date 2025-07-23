@@ -6,8 +6,8 @@ export default defineConfig({
     setupFiles: ["dotenv/config"],
     testTimeout: 60_000,
     sequence: {
-      concurrent: false
-    }
+      concurrent: false,
+    },
   },
   plugins: [tsconfigPaths()],
 });

@@ -10,8 +10,7 @@ evalite("Deep Search Eval", {
           {
             id: "1",
             role: "user",
-            content:
-              "What is the latest version of TypeScript?",
+            content: "What is the latest version of TypeScript?",
           },
         ],
       },
@@ -20,8 +19,7 @@ evalite("Deep Search Eval", {
           {
             id: "2",
             role: "user",
-            content:
-              "What are the main features of Next.js 15?",
+            content: "What are the main features of Next.js 15?",
           },
         ],
       },
@@ -30,8 +28,7 @@ evalite("Deep Search Eval", {
           {
             id: "3",
             role: "user",
-            content:
-              "List three popular React UI libraries.",
+            content: "List three popular React UI libraries.",
           },
         ],
       },
@@ -40,8 +37,7 @@ evalite("Deep Search Eval", {
           {
             id: "4",
             role: "user",
-            content:
-              "Who maintains the Drizzle ORM project?",
+            content: "Who maintains the Drizzle ORM project?",
           },
         ],
       },
@@ -60,8 +56,7 @@ evalite("Deep Search Eval", {
           {
             id: "6",
             role: "user",
-            content:
-              "What is the purpose of the evalite framework?",
+            content: "What is the purpose of the evalite framework?",
           },
         ],
       },
