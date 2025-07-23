@@ -39,8 +39,11 @@ export async function scrapeUrl(urls: string[]): Promise<ScrapeResult[]> {
   }));
 }
 
-export async function runAgentLoop(initialQuestion: string) {
-  const ctx = new SystemContext(initialQuestion);
+export async function runAgentLoop(
+  initialQuestion: string,
+  tone: "franke" | "friend" | "ai_assistant",
+) {
+  const ctx = new SystemContext(initialQuestion, tone);
   console.log(
     `Starting agent loop with initial question: "${initialQuestion}"`,
   );

@@ -1,6 +1,8 @@
 import { streamText, type StreamTextResult } from "ai";
 import { model } from "./model";
 import { type SystemContext } from "./system-context";
+import fs from "fs";
+import path from "path";
 
 export function answerQuestion(
   ctx: SystemContext,
@@ -8,14 +10,35 @@ export function answerQuestion(
 ): StreamTextResult<{}, string> {
   console.info("answerQuestion", { ctx, isFinal: opts?.isFinal });
 
-  const systemPrompt = `You are a helpful AI assistant that answers questions based on the information gathered from web searches and scraped content.
+  const tone = ctx.tone || "franke"; // Default to 'franke' if no tone is set
+
+  // Use absolute paths for prompt files
+  const tonePrompt = `./src/prompts/tone_${tone}.md`;
+
+  let toneContent: string | undefined = undefined;
+  try {
+    toneContent = fs.readFileSync(tonePrompt, "utf-8");
+  } catch (err) {
+    console.warn(`Could not read tone prompt file: ${tonePrompt}`, err);
+    toneContent = `You are a helpful AI assistant that answers questions based on the information gathered from web searches and scraped content. Your goal is to provide accurate and relevant answers to the user's question.`;
+  }
+
+  const formattingLinks = fs
+    .readFileSync("./src/prompts/footnote_markdown_prompt.md", "utf-8")
+    .trim();
+  const formattingAnswers = fs
+    .readFileSync("./src/prompts/formatting.md", "utf-8")
+    .trim();
+
+  const systemPrompt = `${toneContent}
+
+${formattingLinks}
+${formattingAnswers}
 
   When answering:
   1. Be thourough but concise
-  2. Always cite your sources using markdown links
+  2. Always cite your sources
   3. If you're unsure about something, say so
-  4. Format URLs as markdown links using [title](url)
-  5. Never include raw URLs - always use markdown link format
   
   
   
@@ -25,6 +48,7 @@ export function answerQuestion(
       : ""
   };
 `;
+
   const prompt = `
   <question>
     ${ctx.initialQuestion}
@@ -39,6 +63,7 @@ ${ctx.getScrapeHistory()}
 </context>
 
 If you do not have enough information, explain what is missing and make your best attempt to answer anyway.`;
+
   const result = streamText({
     model,
     system: systemPrompt,

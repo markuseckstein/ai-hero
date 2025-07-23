@@ -3,13 +3,13 @@
 import { useChat } from "@ai-sdk/react";
 import type { Message } from "ai";
 import { Loader } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StickToBottom } from "use-stick-to-bottom";
 import { ChatMessage } from "~/components/chat-message";
 import { SignInModal } from "~/components/sign-in-modal";
 import { useSignInModal } from "~/components/use-sign-in-modal";
+import type { AnswerTone } from "~/system-context";
 import { isNewChatCreated } from "~/utils";
 
 interface ChatProps {
@@ -18,6 +18,7 @@ interface ChatProps {
   chatId: string;
   isNewChat: boolean;
   initialMessages?: Message[];
+  tone: "franke" | "friend" | "ai_assistant";
 }
 
 export const ChatPage = ({
@@ -26,7 +27,9 @@ export const ChatPage = ({
   isNewChat,
   isAuthenticated,
   initialMessages,
+  tone: _toneProp, // ignore prop, use local state
 }: ChatProps) => {
+  const [tone, setTone] = useState<AnswerTone>("franke");
   const router = useRouter();
 
   const { isOpen, open, close } = useSignInModal();
@@ -40,7 +43,7 @@ export const ChatPage = ({
     data,
   } = useChat({
     id: chatId,
-    body: { chatId, isNewChat },
+    body: { chatId, isNewChat, tone },
     initialMessages,
   });
 
@@ -94,6 +97,24 @@ export const ChatPage = ({
             ))}
           </StickToBottom.Content>
         </StickToBottom>
+
+        <div className="mb-2 flex items-center gap-2">
+          <label htmlFor="tone-select" className="text-sm text-gray-300">
+            Tone:
+          </label>
+          <select
+            id="tone-select"
+            value={tone}
+            onChange={(e) =>
+              setTone(e.target.value as "franke" | "friend" | "ai_assistant")
+            }
+            className="rounded border border-gray-700 bg-gray-800 p-1 text-gray-200"
+          >
+            <option value="franke">franke</option>
+            <option value="friend">friend</option>
+            <option value="ai_assistant">ai_assistant</option>
+          </select>
+        </div>
 
         <div className="border-t border-gray-700">
           <form onSubmit={handleSubmit} className="mx-auto max-w-[65ch] p-4">

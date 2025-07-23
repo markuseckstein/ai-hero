@@ -13,6 +13,7 @@ import {
   recordRateLimit,
   type RateLimitConfig,
 } from "~/server/redis/rate-limit";
+import type { AnswerTone } from "~/system-context";
 
 export const maxDuration = 60;
 
@@ -119,9 +120,10 @@ export async function POST(request: Request) {
   await db.insert(userRequests).values({ userId: user.id });
   logRequestSpan.end({ output: "logged" });
 
-  const { messages, chatId, isNewChat } = (await request.json()) as {
+  const { messages, chatId, isNewChat, tone } = (await request.json()) as {
     messages: Array<Message>;
     chatId: string;
+    tone: AnswerTone;
     isNewChat?: boolean;
   };
 
@@ -167,6 +169,7 @@ export async function POST(request: Request) {
 
       const result = await streamFromDeepSearch({
         messages,
+        tone,
         onFinish: async ({ response }) => {
           // if (response?.messages) {
           //   const updatedMessages = appendResponseMessages({

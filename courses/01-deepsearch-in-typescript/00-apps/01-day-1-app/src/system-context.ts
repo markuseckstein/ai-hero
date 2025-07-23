@@ -23,12 +23,17 @@ export type ScrapeResult = {
 const toQueryResult = (query: QueryResultSearchResult) =>
   [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
 
+export type AnswerTone = "franke" | "friend" | "ai_assistant";
+
 export class SystemContext {
   private step = 0;
   private queryHistory: QueryResult[] = [];
   private scrapeHistory: ScrapeResult[] = [];
 
-  constructor(public readonly initialQuestion: string) {}
+  constructor(
+    public readonly initialQuestion: string,
+    public readonly tone: AnswerTone,
+  ) {}
 
   shouldStop() {
     return this.step >= 10;
