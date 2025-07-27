@@ -6,7 +6,7 @@ import fs from "fs";
 
 export function answerQuestion(
   ctx: SystemContext,
-  opts?: { isFinal?: boolean },
+  opts?: { isFinal?: boolean; langfuseTraceId?: string },
 ): StreamTextResult<{}, string> {
   console.info("answerQuestion", { ctx, isFinal: opts?.isFinal });
 
@@ -64,6 +64,14 @@ ${ctx.getScrapeHistory()}
 
 If you do not have enough information, explain what is missing and make your best attempt to answer anyway.`;
 
+  const telemetry = opts?.langfuseTraceId
+    ? {
+        isEnabled: true,
+        functionId: `final-answer`,
+        metadata: { langfuseTraceId: opts.langfuseTraceId },
+      }
+    : undefined;
+
   const result = streamText({
     model,
     system: systemPrompt,
@@ -72,6 +80,7 @@ If you do not have enough information, explain what is missing and make your bes
       markdownJoinerTransform(),
       smoothStream({ delayInMs: 20, chunking: "line" }),
     ],
+    experimental_telemetry: telemetry,
     // maxTokens: 1024,
   });
 

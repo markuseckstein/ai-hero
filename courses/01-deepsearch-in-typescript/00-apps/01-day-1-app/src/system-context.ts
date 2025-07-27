@@ -108,10 +108,22 @@ export const actionSchema = z.object({
 
 export type Action = z.infer<typeof actionSchema>;
 
-export const getNextAction = async (context: SystemContext) => {
+export const getNextAction = async (
+  context: SystemContext,
+  langfuseTraceId?: string,
+) => {
+  const telemetry = langfuseTraceId
+    ? {
+        isEnabled: true,
+        functionId: `agent-step-${context.currentStep}`,
+        metadata: { langfuseTraceId: langfuseTraceId },
+      }
+    : undefined;
+
   const result = await generateObject({
     model,
     schema: actionSchema,
+    experimental_telemetry: telemetry,
     system: `You are a helpful AI assistant that can search the web, scrape URLs, or answer questions. Your goal is to determine the next best action to take based on the current context.`,
     prompt: `
     <question>

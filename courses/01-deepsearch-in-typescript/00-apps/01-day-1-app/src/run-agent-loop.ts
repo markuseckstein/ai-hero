@@ -46,6 +46,7 @@ export async function runAgentLoop(
   opts: {
     writeMessageAnnotation: (annotation: OurMessageAnnotation) => void;
     tone: AnswerTone;
+    langfuseTraceId?: string;
   },
 ): Promise<StreamTextResult<{}, string>> {
   const ctx = new SystemContext(initialQuestion, opts.tone);
@@ -53,7 +54,7 @@ export async function runAgentLoop(
     `Starting agent loop with initial question: "${initialQuestion}"`,
   );
   while (!ctx.shouldStop()) {
-    const nextAction = await getNextAction(ctx);
+    const nextAction = await getNextAction(ctx, opts.langfuseTraceId);
 
     if (opts.writeMessageAnnotation) {
       opts.writeMessageAnnotation({
@@ -69,9 +70,12 @@ export async function runAgentLoop(
       const result = await scrapeUrl(nextAction.urls);
       ctx.reportScrapes(result);
     } else if (nextAction.type === "answer") {
-      return answerQuestion(ctx);
+      return answerQuestion(ctx, { langfuseTraceId: opts.langfuseTraceId });
     }
     ctx.incrementStep();
   }
-  return answerQuestion(ctx, { isFinal: true });
+  return answerQuestion(ctx, {
+    isFinal: true,
+    langfuseTraceId: opts.langfuseTraceId,
+  });
 }

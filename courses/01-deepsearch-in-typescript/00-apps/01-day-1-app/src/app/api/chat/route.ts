@@ -191,13 +191,7 @@ export async function POST(request: Request) {
         writeMessageAnnotation: (annotation) => {
           dataStream.writeMessageAnnotation(annotation);
         },
-        telemetry: {
-          isEnabled: true,
-          functionId: "agent",
-          metadata: {
-            langfuseTraceId: trace.id,
-          },
-        },
+        langfuseTraceId: trace.id,
       });
       result.mergeIntoDataStream(dataStream);
     },
