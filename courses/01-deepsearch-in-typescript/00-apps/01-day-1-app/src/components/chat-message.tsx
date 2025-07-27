@@ -7,6 +7,7 @@ interface ChatMessageProps {
   parts: MessagePart[];
   role: string;
   userName: string;
+  annotations: OurMessageAnnotation[];
 }
 
 const components: Components = {
@@ -38,6 +39,8 @@ const components: Components = {
 };
 
 import React, { useState } from "react";
+import type { OurMessageAnnotation } from "~/types";
+import { ReasoningSteps } from "./reasoning-steps";
 
 const ToolInvocation = ({
   part,
@@ -97,7 +100,12 @@ const Markdown = ({ children }: { children: string }) => {
   return <ReactMarkdown components={components}>{children}</ReactMarkdown>;
 };
 
-export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
+export const ChatMessage = ({
+  parts,
+  role,
+  userName,
+  annotations,
+}: ChatMessageProps) => {
   const isAI = role === "assistant";
 
   return (
@@ -110,6 +118,9 @@ export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
         <p className="mb-2 text-sm font-semibold text-gray-400">
           {isAI ? "AI" : userName}
         </p>
+
+        {isAI && annotations && <ReasoningSteps annotations={annotations} />}
+
         <div className="prose prose-invert max-w-none">
           {parts &&
             parts.length &&

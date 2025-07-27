@@ -1,9 +1,11 @@
+import type { StreamTextResult } from "ai";
 import { answerQuestion } from "./answer-question";
 import { env } from "./env";
 import { searchSerper } from "./serper";
 import { bulkCrawlWebsites } from "./server/scraper";
-import type { QueryResult, ScrapeResult } from "./system-context";
+import type { AnswerTone, QueryResult, ScrapeResult } from "./system-context";
 import { SystemContext, getNextAction } from "./system-context";
+import type { OurMessageAnnotation } from "./types";
 
 // Copy-paste of searchWeb tool logic
 export async function searchWeb(query: string): Promise<QueryResult> {
@@ -41,15 +43,25 @@ export async function scrapeUrl(urls: string[]): Promise<ScrapeResult[]> {
 
 export async function runAgentLoop(
   initialQuestion: string,
-  tone: "franke" | "friend" | "ai_assistant",
-) {
-  const ctx = new SystemContext(initialQuestion, tone);
+  opts: {
+    writeMessageAnnotation: (annotation: OurMessageAnnotation) => void;
+    tone: AnswerTone;
+  },
+): Promise<StreamTextResult<{}, string>> {
+  const ctx = new SystemContext(initialQuestion, opts.tone);
   console.log(
     `Starting agent loop with initial question: "${initialQuestion}"`,
   );
   while (!ctx.shouldStop()) {
     const nextAction = await getNextAction(ctx);
-    console.log(`Next action (loop ${ctx.currentStep}):`, nextAction);
+
+    if (opts.writeMessageAnnotation) {
+      opts.writeMessageAnnotation({
+        type: "NEW_ACTION",
+        action: nextAction,
+      });
+    }
+
     if (nextAction.type === "search" && nextAction.query) {
       const result = await searchWeb(nextAction.query);
       ctx.reportQueries([result]);

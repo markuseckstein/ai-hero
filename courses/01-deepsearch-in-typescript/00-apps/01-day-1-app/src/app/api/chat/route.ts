@@ -188,6 +188,9 @@ export async function POST(request: Request) {
           // }
           // await langfuse.flushAsync();
         },
+        writeMessageAnnotation: (annotation) => {
+          dataStream.writeMessageAnnotation(annotation);
+        },
         telemetry: {
           isEnabled: true,
           functionId: "agent",

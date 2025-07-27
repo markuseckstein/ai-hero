@@ -1,8 +1,8 @@
-import { streamText, type StreamTextResult } from "ai";
+import { streamText, type StreamTextResult, smoothStream } from "ai";
+import { markdownJoinerTransform } from "./markdown-joiner";
 import { model } from "./model";
 import { type SystemContext } from "./system-context";
 import fs from "fs";
-import path from "path";
 
 export function answerQuestion(
   ctx: SystemContext,
@@ -68,6 +68,10 @@ If you do not have enough information, explain what is missing and make your bes
     model,
     system: systemPrompt,
     prompt,
+    experimental_transform: [
+      markdownJoinerTransform(),
+      smoothStream({ delayInMs: 20, chunking: "line" }),
+    ],
     // maxTokens: 1024,
   });
 

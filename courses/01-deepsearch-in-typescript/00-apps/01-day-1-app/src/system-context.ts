@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { generateObject } from "ai";
 import { model } from "./model";
-import type { IncomingMessage } from "http";
 
 type QueryResultSearchResult = {
   date: string;
@@ -80,23 +79,13 @@ export class SystemContext {
   }
 }
 
-export interface SearchAction {
-  type: "search";
-  query: string;
-}
-
-export interface ScrapeAction {
-  type: "scrape";
-  urls: string[];
-}
-
-export interface AnswerAction {
-  type: "answer";
-}
-
-export type Action = SearchAction | ScrapeAction | AnswerAction;
-
 export const actionSchema = z.object({
+  title: z
+    .string()
+    .describe(
+      "The title of the action, to be displayed in the UI. Be extremely concise. 'Searching Saka's injury history', 'Checking HMRC industrial action', 'Comparing toaster ovens'",
+    ),
+  reasoning: z.string().describe("The reason you chose this step."),
   type: z.enum(["search", "scrape", "answer"]).describe(
     `The type of action to take.
        - 'search': Search the web for more information.
@@ -116,6 +105,8 @@ export const actionSchema = z.object({
     )
     .optional(),
 });
+
+export type Action = z.infer<typeof actionSchema>;
 
 export const getNextAction = async (context: SystemContext) => {
   const result = await generateObject({
