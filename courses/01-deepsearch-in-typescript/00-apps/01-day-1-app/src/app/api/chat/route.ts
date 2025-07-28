@@ -1,5 +1,5 @@
 import type { Message } from "ai";
-import { createDataStreamResponse } from "ai";
+import { appendResponseMessages, createDataStreamResponse } from "ai";
 import { and, eq, gte, lt } from "drizzle-orm";
 import { Langfuse } from "langfuse";
 import { streamFromDeepSearch } from "~/deep-search";
@@ -14,6 +14,7 @@ import {
   type RateLimitConfig,
 } from "~/server/redis/rate-limit";
 import type { AnswerTone } from "~/system-context";
+import type { OurMessageAnnotation } from "~/types";
 
 export const maxDuration = 60;
 
@@ -29,6 +30,8 @@ const config: RateLimitConfig = {
 };
 
 export async function POST(request: Request) {
+  // Collect annotations for reasoning steps
+  const annotations: OurMessageAnnotation[] = [];
   // Check the rate limit
   const rateLimitCheck = await checkRateLimit(config);
 
@@ -171,24 +174,34 @@ export async function POST(request: Request) {
         messages,
         tone,
         onFinish: async ({ response }) => {
-          // if (response?.messages) {
-          //   const updatedMessages = appendResponseMessages({
-          //     messages,
-          //     responseMessages: response.messages,
-          //   });
-          //   // Update the chat with all messages including the AI response
-          //   const upsertChatFinishSpan = trace.span({ name: "db-upsert-chat-finish", input: { userId: user.id, chatId, title: chatTitle, messages: updatedMessages } });
-          //   await upsertChat({
-          //     userId: user.id,
-          //     chatId,
-          //     title: chatTitle,
-          //     messages: updatedMessages,
-          //   });
-          //   upsertChatFinishSpan.end({ output: "upserted" });
-          // }
-          // await langfuse.flushAsync();
+          console.log("onFinish", response);
+          // Merge the existing messages with the response messages
+          const updatedMessages = appendResponseMessages({
+            messages,
+            responseMessages: response.messages,
+          });
+          const lastMessage = updatedMessages[updatedMessages.length - 1];
+          if (!lastMessage) {
+            return;
+          }
+
+          lastMessage.annotations = annotations;
+          // Persist updated messages with annotations
+          const upsertChatFinishSpan = trace.span({
+            name: "db-upsert-chat-finish",
+            input: { userId: user.id, chatId, title: chatTitle, messages },
+          });
+          await upsertChat({
+            userId: user.id,
+            chatId,
+            title: chatTitle,
+            messages,
+          });
+          upsertChatFinishSpan.end({ output: "upserted" });
+          await langfuse.flushAsync();
         },
         writeMessageAnnotation: (annotation) => {
+          annotations.push(annotation);
           dataStream.writeMessageAnnotation(annotation);
         },
         langfuseTraceId: trace.id,

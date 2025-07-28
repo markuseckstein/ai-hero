@@ -3,10 +3,15 @@ import { markdownJoinerTransform } from "./markdown-joiner";
 import { model } from "./model";
 import { type SystemContext } from "./system-context";
 import fs from "fs";
+import type { Parameter } from "postgres";
 
 export function answerQuestion(
   ctx: SystemContext,
-  opts?: { isFinal?: boolean; langfuseTraceId?: string },
+  opts: {
+    isFinal?: boolean;
+    langfuseTraceId?: string;
+    onFinish: Parameters<typeof streamText>[0]["onFinish"];
+  },
 ): StreamTextResult<{}, string> {
   console.info("answerQuestion", { ctx, isFinal: opts?.isFinal });
 
@@ -81,6 +86,7 @@ If you do not have enough information, explain what is missing and make your bes
       smoothStream({ delayInMs: 20, chunking: "line" }),
     ],
     experimental_telemetry: telemetry,
+    onFinish: opts.onFinish,
     // maxTokens: 1024,
   });
 

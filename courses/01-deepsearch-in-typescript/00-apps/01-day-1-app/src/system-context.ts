@@ -26,7 +26,6 @@ const toQueryResult = (query: QueryResultSearchResult) =>
 export type AnswerTone = "franke" | "friend" | "ai_assistant";
 
 export class SystemContext {
-  
   public getFirstUserMessage(): string {
     if (!this.messages) return "";
     for (const msg of this.messages) {
@@ -36,7 +35,7 @@ export class SystemContext {
     }
     return "";
   }
-  
+
   // public getLastUserMessage(): string {
   //   if (!this.messages) return "";
   //   for (let i = this.messages.length - 1; i >= 0; i--) {

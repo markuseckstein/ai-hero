@@ -1,4 +1,4 @@
-import type { StreamTextResult, Message } from "ai";
+import type { StreamTextResult, Message, streamText } from "ai";
 import { answerQuestion } from "./answer-question";
 import { env } from "./env";
 import { searchSerper } from "./serper";
@@ -47,6 +47,7 @@ export async function runAgentLoop(
     writeMessageAnnotation: (annotation: OurMessageAnnotation) => void;
     tone: AnswerTone;
     langfuseTraceId?: string;
+    onFinish: Parameters<typeof streamText>[0]["onFinish"];
   },
 ): Promise<StreamTextResult<{}, string>> {
   const ctx = new SystemContext(messages, opts.tone);
@@ -70,12 +71,16 @@ export async function runAgentLoop(
       const result = await scrapeUrl(nextAction.urls);
       ctx.reportScrapes(result);
     } else if (nextAction.type === "answer") {
-      return answerQuestion(ctx, { langfuseTraceId: opts.langfuseTraceId });
+      return answerQuestion(ctx, {
+        langfuseTraceId: opts.langfuseTraceId,
+        onFinish: opts.onFinish,
+      });
     }
     ctx.incrementStep();
   }
   return answerQuestion(ctx, {
     isFinal: true,
     langfuseTraceId: opts.langfuseTraceId,
+    onFinish: opts.onFinish,
   });
 }

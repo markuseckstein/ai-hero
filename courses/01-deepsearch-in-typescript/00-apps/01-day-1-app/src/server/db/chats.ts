@@ -49,6 +49,7 @@ export const upsertChat = async (opts: {
           chatId: opts.chatId,
           role: message.role,
           parts: message.parts,
+          annotations: message.annotations ?? [],
           order: index,
         })),
       );

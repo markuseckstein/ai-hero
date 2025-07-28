@@ -152,6 +152,7 @@ export const messages = createTable("message", {
     .references(() => chats.id),
   role: varchar("role", { length: 50 }).notNull(),
   parts: json("parts").notNull(),
+  annotations: json("annotations"), // new field for reasoning steps
   order: integer("order").notNull(),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)

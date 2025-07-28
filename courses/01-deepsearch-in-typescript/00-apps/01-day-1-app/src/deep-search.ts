@@ -1,8 +1,4 @@
-import {
-  type Message,
-  type streamText,
-  type StreamTextResult,
-} from "ai";
+import { type Message, type streamText, type StreamTextResult } from "ai";
 
 import { runAgentLoop } from "./run-agent-loop";
 import type { AnswerTone } from "./system-context";
@@ -19,6 +15,7 @@ export function streamFromDeepSearch(opts: {
     tone: opts.tone,
     writeMessageAnnotation: opts.writeMessageAnnotation,
     langfuseTraceId: opts.langfuseTraceId,
+    onFinish: opts.onFinish,
   });
 }
 

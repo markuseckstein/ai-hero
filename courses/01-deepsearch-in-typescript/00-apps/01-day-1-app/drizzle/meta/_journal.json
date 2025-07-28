@@ -15,6 +15,13 @@
       "when": 1752676541259,
       "tag": "0001_flippant_cammi",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1753722433982,
+      "tag": "0002_far_expediter",
+      "breakpoints": true
     }
   ]
 }
