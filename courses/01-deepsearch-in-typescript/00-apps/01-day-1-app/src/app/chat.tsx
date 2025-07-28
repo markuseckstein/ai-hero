@@ -28,7 +28,7 @@ export const ChatPage = ({
   isAuthenticated,
   initialMessages,
 }: ChatProps) => {
-  const [tone, setTone] = useState<AnswerTone>("franke");
+  const [tone, setTone] = useState<AnswerTone>("friend");
   const router = useRouter();
 
   const { isOpen, open, close } = useSignInModal();

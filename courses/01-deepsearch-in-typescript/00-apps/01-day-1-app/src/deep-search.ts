@@ -15,10 +15,7 @@ export function streamFromDeepSearch(opts: {
   langfuseTraceId?: string;
   writeMessageAnnotation: (annotation: OurMessageAnnotation) => void;
 }): Promise<StreamTextResult<{}, string>> {
-  // Use the first user message as the initial question
-  const initialQuestion =
-    opts.messages.find((m) => m.role === "user")?.content || "";
-  return runAgentLoop(initialQuestion, {
+  return runAgentLoop(opts.messages, {
     tone: opts.tone,
     writeMessageAnnotation: opts.writeMessageAnnotation,
     langfuseTraceId: opts.langfuseTraceId,

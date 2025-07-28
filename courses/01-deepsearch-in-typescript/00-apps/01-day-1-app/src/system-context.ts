@@ -1,5 +1,6 @@
+// ...existing code...
 import { z } from "zod";
-import { generateObject } from "ai";
+import { generateObject, type Message } from "ai";
 import { model } from "./model";
 
 type QueryResultSearchResult = {
@@ -25,14 +26,47 @@ const toQueryResult = (query: QueryResultSearchResult) =>
 export type AnswerTone = "franke" | "friend" | "ai_assistant";
 
 export class SystemContext {
+  
+  public getFirstUserMessage(): string {
+    if (!this.messages) return "";
+    for (const msg of this.messages) {
+      if (msg && msg.role === "user") {
+        return msg.content ?? "";
+      }
+    }
+    return "";
+  }
+  
+  // public getLastUserMessage(): string {
+  //   if (!this.messages) return "";
+  //   for (let i = this.messages.length - 1; i >= 0; i--) {
+  //     const msg = this.messages[i];
+  //     if (msg && msg.role === "user") {
+  //       return msg.content ?? "";
+  //     }
+  //   }
+  //   return "";
+  // }
   private step = 0;
   private queryHistory: QueryResult[] = [];
   private scrapeHistory: ScrapeResult[] = [];
 
+  private readonly messages: Message[];
   constructor(
-    public readonly initialQuestion: string,
+    messages: Message[],
     public readonly tone: AnswerTone,
-  ) {}
+  ) {
+    this.messages = messages;
+  }
+
+  getMessageHistory(): string {
+    return this.messages
+      .map((message) => {
+        const role = message.role === "user" ? "User" : "Assistant";
+        return `<${role}>${message.content}</${role}>`;
+      })
+      .join("\n\n");
+  }
 
   shouldStop() {
     return this.step >= 10;
@@ -126,9 +160,9 @@ export const getNextAction = async (
     experimental_telemetry: telemetry,
     system: `You are a helpful AI assistant that can search the web, scrape URLs, or answer questions. Your goal is to determine the next best action to take based on the current context.`,
     prompt: `
-    <question>
-      ${context.initialQuestion}
-    </question>
+    Message History:
+      ${context.getMessageHistory()}
+    
 
     Based on this context, choose the next action:
 

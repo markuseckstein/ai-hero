@@ -1,4 +1,4 @@
-import type { StreamTextResult } from "ai";
+import type { StreamTextResult, Message } from "ai";
 import { answerQuestion } from "./answer-question";
 import { env } from "./env";
 import { searchSerper } from "./serper";
@@ -42,16 +42,16 @@ export async function scrapeUrl(urls: string[]): Promise<ScrapeResult[]> {
 }
 
 export async function runAgentLoop(
-  initialQuestion: string,
+  messages: Message[],
   opts: {
     writeMessageAnnotation: (annotation: OurMessageAnnotation) => void;
     tone: AnswerTone;
     langfuseTraceId?: string;
   },
 ): Promise<StreamTextResult<{}, string>> {
-  const ctx = new SystemContext(initialQuestion, opts.tone);
+  const ctx = new SystemContext(messages, opts.tone);
   console.log(
-    `Starting agent loop with initial question: "${initialQuestion}"`,
+    `Starting agent loop with initial message: "${messages[messages.length - 1]?.content ?? ""}"`,
   );
   while (!ctx.shouldStop()) {
     const nextAction = await getNextAction(ctx, opts.langfuseTraceId);

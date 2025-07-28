@@ -51,7 +51,7 @@ ${formattingAnswers}
 
   const prompt = `
   <question>
-    ${ctx.initialQuestion}
+    ${ctx.getFirstUserMessage()}
   </question>
   
   Based on the following context, please answer the question:
