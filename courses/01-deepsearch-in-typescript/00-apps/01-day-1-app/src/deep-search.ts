@@ -1,18 +1,24 @@
-import { type Message, type streamText, type StreamTextResult } from "ai";
-
 import { runAgentLoop } from "./run-agent-loop";
-import type { AnswerTone } from "./system-context";
+import type { AnswerTone, UserLocation } from "./system-context";
 import type { OurMessageAnnotation } from "./types";
+import type { Message, StreamTextResult } from "ai";
+import { streamText } from "ai";
 
-export function streamFromDeepSearch(opts: {
+interface DeepSearchOptions {
   messages: Message[];
   tone: AnswerTone;
+  userLocation?: UserLocation;
   onFinish: Parameters<typeof streamText>[0]["onFinish"];
   langfuseTraceId?: string;
   writeMessageAnnotation: (annotation: OurMessageAnnotation) => void;
-}): Promise<StreamTextResult<{}, string>> {
+}
+
+export function streamFromDeepSearch(
+  opts: DeepSearchOptions,
+): Promise<StreamTextResult<{}, string>> {
   return runAgentLoop(opts.messages, {
     tone: opts.tone,
+    userLocation: opts.userLocation,
     writeMessageAnnotation: opts.writeMessageAnnotation,
     langfuseTraceId: opts.langfuseTraceId,
     onFinish: opts.onFinish,

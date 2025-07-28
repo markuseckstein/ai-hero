@@ -3,7 +3,12 @@ import { answerQuestion } from "./answer-question";
 import { env } from "./env";
 import { searchSerper } from "./serper";
 import { bulkCrawlWebsites } from "./server/scraper";
-import type { AnswerTone, QueryResult, ScrapeResult } from "./system-context";
+import type {
+  AnswerTone,
+  QueryResult,
+  ScrapeResult,
+  UserLocation,
+} from "./system-context";
 import { SystemContext, getNextAction } from "./system-context";
 import type { OurMessageAnnotation } from "./types";
 
@@ -48,9 +53,10 @@ export async function runAgentLoop(
     tone: AnswerTone;
     langfuseTraceId?: string;
     onFinish: Parameters<typeof streamText>[0]["onFinish"];
+    userLocation: UserLocation;
   },
 ): Promise<StreamTextResult<{}, string>> {
-  const ctx = new SystemContext(messages, opts.tone);
+  const ctx = new SystemContext(messages, opts.tone, opts.userLocation);
   console.log(
     `Starting agent loop with initial message: "${messages[messages.length - 1]?.content ?? ""}"`,
   );

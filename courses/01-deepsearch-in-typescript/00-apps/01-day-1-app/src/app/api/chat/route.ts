@@ -1,4 +1,5 @@
 import { generateChatTitle } from "~/generate-chat-title";
+import { geolocation } from "@vercel/functions";
 import type { Message } from "ai";
 import { appendResponseMessages, createDataStreamResponse } from "ai";
 import { and, eq, gte, lt } from "drizzle-orm";
@@ -14,7 +15,7 @@ import {
   recordRateLimit,
   type RateLimitConfig,
 } from "~/server/redis/rate-limit";
-import type { AnswerTone } from "~/system-context";
+import type { AnswerTone, UserLocation } from "~/system-context";
 import type { OurMessageAnnotation } from "~/types";
 
 export const maxDuration = 60;
@@ -33,6 +34,17 @@ const config: RateLimitConfig = {
 export async function POST(request: Request) {
   // Collect annotations for reasoning steps
   const annotations: OurMessageAnnotation[] = [];
+
+  // Mock geolocation headers in development
+  if (process.env.NODE_ENV === "development") {
+    request.headers.set("x-vercel-ip-country", "DE");
+    request.headers.set("x-vercel-ip-country-region", "BY");
+    request.headers.set("x-vercel-ip-city", "Bamberg");
+  }
+
+  // Get user location
+  const { longitude, latitude, city, country } = geolocation(request);
+  const userLocation: UserLocation = { longitude, latitude, city, country };
   // Check the rate limit
   const rateLimitCheck = await checkRateLimit(config);
 
@@ -174,6 +186,7 @@ export async function POST(request: Request) {
       const result = await streamFromDeepSearch({
         messages,
         tone,
+        userLocation,
         onFinish: async ({ response }) => {
           console.log("onFinish", response);
           // Merge the existing messages with the response messages

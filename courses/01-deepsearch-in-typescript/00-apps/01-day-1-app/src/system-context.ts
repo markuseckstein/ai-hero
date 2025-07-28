@@ -1,4 +1,3 @@
-// ...existing code...
 import { z } from "zod";
 import { generateObject, type Message } from "ai";
 import { model } from "./model";
@@ -25,8 +24,30 @@ const toQueryResult = (query: QueryResultSearchResult) =>
 
 export type AnswerTone = "franke" | "friend" | "ai_assistant";
 
+export interface UserLocation {
+  longitude?: string;
+  latitude?: string;
+  city?: string;
+  country?: string;
+}
+
 export class SystemContext {
-  public getFirstUserMessage(): string {
+  public location?: UserLocation;
+  private step = 0;
+  private queryHistory: QueryResult[] = [];
+  private scrapeHistory: ScrapeResult[] = [];
+  private readonly messages: Message[];
+
+  constructor(
+    messages: Message[],
+    public readonly tone: AnswerTone,
+    location?: UserLocation,
+  ) {
+    this.messages = messages;
+    this.location = location;
+  }
+
+  getFirstUserMessage(): string {
     if (!this.messages) return "";
     for (const msg of this.messages) {
       if (msg && msg.role === "user") {
@@ -36,26 +57,9 @@ export class SystemContext {
     return "";
   }
 
-  // public getLastUserMessage(): string {
-  //   if (!this.messages) return "";
-  //   for (let i = this.messages.length - 1; i >= 0; i--) {
-  //     const msg = this.messages[i];
-  //     if (msg && msg.role === "user") {
-  //       return msg.content ?? "";
-  //     }
-  //   }
-  //   return "";
-  // }
-  private step = 0;
-  private queryHistory: QueryResult[] = [];
-  private scrapeHistory: ScrapeResult[] = [];
-
-  private readonly messages: Message[];
-  constructor(
-    messages: Message[],
-    public readonly tone: AnswerTone,
-  ) {
-    this.messages = messages;
+  getLocationContext(): string {
+    if (!this.location) return "";
+    return `About the origin of user's request:\n- lat: ${this.location.latitude}\n- lon: ${this.location.longitude}\n- city: ${this.location.city}\n- country: ${this.location.country}`;
   }
 
   getMessageHistory(): string {
@@ -161,7 +165,8 @@ export const getNextAction = async (
     prompt: `
     Message History:
       ${context.getMessageHistory()}
-    
+
+    ${context.getLocationContext()}
 
     Based on this context, choose the next action:
 
@@ -180,6 +185,8 @@ Here is the context:
     ${context.getQueryHistory()}
 
     ${context.getScrapeHistory()}
+
+    ${context.getLocationContext()}
     </context>
 
     Your options:

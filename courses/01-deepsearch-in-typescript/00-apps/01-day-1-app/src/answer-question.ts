@@ -1,9 +1,8 @@
 import { streamText, type StreamTextResult, smoothStream } from "ai";
 import { markdownJoinerTransform } from "./markdown-joiner";
 import { model } from "./model";
-import { type SystemContext } from "./system-context";
+import { type SystemContext, type UserLocation } from "./system-context";
 import fs from "fs";
-import type { Parameter } from "postgres";
 
 export function answerQuestion(
   ctx: SystemContext,
@@ -65,7 +64,11 @@ ${formattingAnswers}
 ${ctx.getQueryHistory()}
 
 ${ctx.getScrapeHistory()}
+
+${ctx.getLocationContext()}
 </context>
+
+
 
 If you do not have enough information, explain what is missing and make your best attempt to answer anyway.`;
 
