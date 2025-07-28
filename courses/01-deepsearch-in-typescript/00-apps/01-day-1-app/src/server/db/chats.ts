@@ -13,7 +13,7 @@ export const upsertChat = async (opts: {
   return await db.transaction(async (tx) => {
     // First, try to find the existing chat
     const existingChat = await tx.query.chats.findFirst({
-      where: and(eq(chats.id, opts.chatId), eq(chats.userId, opts.userId)),
+      where: eq(chats.id, opts.chatId),
     });
 
     if (existingChat) {
@@ -21,24 +21,22 @@ export const upsertChat = async (opts: {
       if (existingChat.userId !== opts.userId) {
         throw new Error("Chat ID already exists for another user");
       }
-
-      // Update the chat title and timestamps
+    }
+    if (existingChat) {
+      // If chat exists, verify ownership
+      const updateData: any = { updatedAt: new Date() };
+      if (opts.title) updateData.title = opts.title;
       await tx
         .update(chats)
-        .set({
-          title: opts.title,
-          updatedAt: new Date(),
-        })
-        .where(eq(chats.id, opts.chatId));
-
-      // Delete all existing messages
-      await tx.delete(messages).where(eq(messages.chatId, opts.chatId));
+        .set(updateData)
+        .where(and(eq(chats.id, opts.chatId), eq(chats.userId, opts.userId)));
     } else {
-      // Create a new chat
       await tx.insert(chats).values({
         id: opts.chatId,
         userId: opts.userId,
-        title: opts.title,
+        title: opts.title ?? "Generating...",
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
     }
 

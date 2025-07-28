@@ -1,3 +1,4 @@
+import { generateChatTitle } from "~/generate-chat-title";
 import type { Message } from "ai";
 import { appendResponseMessages, createDataStreamResponse } from "ai";
 import { and, eq, gte, lt } from "drizzle-orm";
@@ -133,27 +134,27 @@ export async function POST(request: Request) {
   // Ensure we use the correct chatId for session
   const currentChatId = chatId || (isNewChat ? chatId : undefined);
 
-  // Create or update the chat before streaming begins
-  // Use the first message's content as the chat title
-  const firstUserMessage = messages.find((m) => m.role === "user")?.content;
-  const chatTitle =
-    typeof firstUserMessage === "string"
-      ? firstUserMessage.slice(0, 100)
-      : "New Chat";
-
+  // Generate chat title in parallel if new chat
+  let titlePromise: Promise<string> | undefined;
+  if (isNewChat) {
+    titlePromise = generateChatTitle(messages);
+  } else {
+    titlePromise = Promise.resolve("");
+  }
+  // Save chat with placeholder title if new
   const upsertChatSpan = trace.span({
     name: "db-upsert-chat",
     input: {
       userId: user.id,
       chatId: currentChatId,
-      title: chatTitle,
+      title: isNewChat ? "Generating..." : undefined,
       messages,
     },
   });
   await upsertChat({
     userId: user.id,
     chatId,
-    title: chatTitle,
+    title: isNewChat ? "Generating..." : "",
     messages,
   });
   upsertChatSpan.end({ output: "upserted" });
@@ -186,16 +187,21 @@ export async function POST(request: Request) {
           }
 
           lastMessage.annotations = annotations;
-          // Persist updated messages with annotations
+          // Persist updated messages with annotations and generated title
+          const generatedTitle = await titlePromise;
+          console.log("Generated chat title in onFinish:", {
+            chatId,
+            generatedTitle,
+          });
           const upsertChatFinishSpan = trace.span({
             name: "db-upsert-chat-finish",
-            input: { userId: user.id, chatId, title: chatTitle, messages },
+            input: { userId: user.id, chatId, title: generatedTitle, messages },
           });
           await upsertChat({
             userId: user.id,
             chatId,
-            title: chatTitle,
-            messages,
+            title: generatedTitle || "",
+            messages: updatedMessages,
           });
           upsertChatFinishSpan.end({ output: "upserted" });
           await langfuse.flushAsync();
