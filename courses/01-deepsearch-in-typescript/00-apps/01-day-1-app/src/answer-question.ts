@@ -1,22 +1,14 @@
-import { streamText, type StreamTextResult, smoothStream } from "ai";
+import { smoothStream, streamText, type StreamTextResult } from "ai";
+import fs from "fs";
 import { markdownJoinerTransform } from "./markdown-joiner";
 import { model } from "./model";
-import { type SystemContext, type UserLocation } from "./system-context";
-import fs from "fs";
+import { type SystemContext } from "./system-context";
 
-export function answerQuestion(
+function generateSystemPrompt(
   ctx: SystemContext,
-  opts: {
-    isFinal?: boolean;
-    langfuseTraceId?: string;
-    onFinish: Parameters<typeof streamText>[0]["onFinish"];
-  },
-): StreamTextResult<{}, string> {
-  console.info("answerQuestion", { ctx, isFinal: opts?.isFinal });
-
+  opts: { isFinal?: boolean },
+): string {
   const tone = ctx.tone || "franke"; // Default to 'franke' if no tone is set
-
-  // Use absolute paths for prompt files
   const tonePrompt = `./src/prompts/tone_${tone}.md`;
 
   let toneContent: string | undefined = undefined;
@@ -34,7 +26,7 @@ export function answerQuestion(
     .readFileSync("./src/prompts/formatting.md", "utf-8")
     .trim();
 
-  const systemPrompt = `${toneContent}
+  return `${toneContent}
 
 ${formattingLinks}
 ${formattingAnswers}
@@ -52,6 +44,19 @@ ${formattingAnswers}
       : ""
   };
 `;
+}
+
+export function answerQuestion(
+  ctx: SystemContext,
+  opts: {
+    isFinal?: boolean;
+    langfuseTraceId?: string;
+    onFinish: Parameters<typeof streamText>[0]["onFinish"];
+  },
+): StreamTextResult<{}, string> {
+  console.info("answerQuestion", { ctx, isFinal: opts?.isFinal });
+
+  const systemPrompt = generateSystemPrompt(ctx, opts);
 
   const prompt = `
   <question>

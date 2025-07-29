@@ -1,50 +1,12 @@
 import type { StreamTextResult, Message, streamText } from "ai";
 import { answerQuestion } from "./answer-question";
-import { env } from "./env";
-import { searchSerper } from "./serper";
-import { bulkCrawlWebsites } from "./server/scraper";
-import type {
-  AnswerTone,
-  QueryResult,
-  ScrapeResult,
-  UserLocation,
-} from "./system-context";
+import { searchWeb } from "./search-web";
+import { scrapeUrl } from "./scrape-url";
+import type { AnswerTone, UserLocation } from "./system-context";
 import { SystemContext, getNextAction } from "./system-context";
 import type { OurMessageAnnotation } from "./types";
 
-// Copy-paste of searchWeb tool logic
-export async function searchWeb(query: string): Promise<QueryResult> {
-  const results = await searchSerper(
-    { q: query, num: env.SEARCH_RESULTS_COUNT },
-    undefined,
-  );
-  return {
-    query,
-    results: results.organic.map((result) => ({
-      title: result.title,
-      url: result.link,
-      snippet: result.snippet,
-      date: result.date ?? "", // ensure string
-    })),
-  };
-}
-
-// Copy-paste of scrapePages tool logic
-export async function scrapeUrl(urls: string[]): Promise<ScrapeResult[]> {
-  const crawlResults = await bulkCrawlWebsites({ urls });
-  if (!crawlResults.success) {
-    return crawlResults.results.map((r) => ({
-      url: r.url,
-      result: r.result.success
-        ? r.result.data
-        : `Error: ${(r.result as any).error}`,
-    }));
-  }
-  return crawlResults.results.map((r) => ({
-    url: r.url,
-    result: r.result.data,
-  }));
-}
+// ...existing code...
 
 export async function runAgentLoop(
   messages: Message[],
