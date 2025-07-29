@@ -66,9 +66,7 @@ export function answerQuestion(
   Based on the following context, please answer the question:
 
 <context>
-${ctx.getQueryHistory()}
-
-${ctx.getScrapeHistory()}
+${ctx.getSearchHistory()}
 
 ${ctx.getLocationContext()}
 </context>

@@ -2,25 +2,38 @@ import { z } from "zod";
 import { generateObject, type Message } from "ai";
 import { model } from "./model";
 
-type QueryResultSearchResult = {
-  date: string;
-  title: string;
-  url: string;
-  snippet: string;
-};
+// type QueryResultSearchResult = {
+//   date: string;
+//   title: string;
+//   url: string;
+//   snippet: string;
+// };
 
-export type QueryResult = {
-  query: string;
-  results: QueryResultSearchResult[];
-};
+// export type QueryResult = {
+//   query: string;
+//   results: QueryResultSearchResult[];
+// };
 
 export type ScrapeResult = {
   url: string;
   result: string;
 };
 
-const toQueryResult = (query: QueryResultSearchResult) =>
-  [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
+export type SearchResult = {
+  date: string;
+  title: string;
+  url: string;
+  snippet: string;
+  summary: string;
+};
+
+export type SearchHistoryEntry = {
+  query: string;
+  results: SearchResult[];
+};
+
+// const toQueryResult = (query: QueryResultSearchResult) =>
+//   [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
 
 export type AnswerTone = "franke" | "friend" | "ai_assistant";
 
@@ -34,9 +47,10 @@ export interface UserLocation {
 export class SystemContext {
   public location?: UserLocation;
   private step = 0;
-  private queryHistory: QueryResult[] = [];
-  private scrapeHistory: ScrapeResult[] = [];
+  // private queryHistory: QueryResult[] = [];
+  // private scrapeHistory: ScrapeResult[] = [];
   private readonly messages: Message[];
+  private readonly searchHistory: SearchHistoryEntry[] = [];
 
   constructor(
     messages: Message[],
@@ -45,6 +59,30 @@ export class SystemContext {
   ) {
     this.messages = messages;
     this.location = location;
+  }
+
+  reportSearch(search: SearchHistoryEntry) {
+    this.searchHistory.push(search);
+  }
+
+  getSearchHistory(): string {
+    return this.searchHistory
+      .map((search) =>
+        [
+          `## Query: "${search.query}"`,
+          ...search.results.map((result) =>
+            [
+              `### ${result.date} - ${result.title}`,
+              result.url,
+              result.snippet,
+              `<scrape_result>`,
+              result.summary,
+              `</scrape_result>`,
+            ].join("\n\n"),
+          ),
+        ].join("\n\n"),
+      )
+      .join("\n\n");
   }
 
   getFirstUserMessage(): string {
@@ -72,7 +110,7 @@ export class SystemContext {
   }
 
   shouldStop() {
-    return this.step >= 10;
+    return this.step >= 4;
   }
 
   incrementStep() {
@@ -83,67 +121,58 @@ export class SystemContext {
     return this.step;
   }
 
-  reportQueries(queries: QueryResult[]) {
-    this.queryHistory.push(...queries);
-  }
+  // reportQueries(queries: QueryResult[]) {
+  //   this.queryHistory.push(...queries);
+  // }
 
-  reportScrapes(scrapes: ScrapeResult[]) {
-    this.scrapeHistory.push(...scrapes);
-  }
+  // reportScrapes(scrapes: ScrapeResult[]) {
+  //   this.scrapeHistory.push(...scrapes);
+  // }
 
-  getQueryHistory(): string {
-    return this.queryHistory
-      .map((query) =>
-        [
-          `## Query: \"${query.query}\"`,
-          ...query.results.map(toQueryResult),
-        ].join("\n\n"),
-      )
-      .join("\n\n");
-  }
+  // getQueryHistory(): string {
+  //   return this.queryHistory
+  //     .map((query) =>
+  //       [
+  //         `## Query: \"${query.query}\"`,
+  //         ...query.results.map(toQueryResult),
+  //       ].join("\n\n"),
+  //     )
+  //     .join("\n\n");
+  // }
 
-  getScrapeHistory(): string {
-    return this.scrapeHistory
-      .map((scrape) =>
-        [
-          `## Scrape: \"${scrape.url}\"`,
-          `<scrape_result>`,
-          scrape.result,
-          `</scrape_result>`,
-        ].join("\n\n"),
-      )
-      .join("\n\n");
-  }
+  // getScrapeHistory(): string {
+  //   return this.scrapeHistory
+  //     .map((scrape) =>
+  //       [
+  //         `## Scrape: \"${scrape.url}\"`,
+  //         `<scrape_result>`,
+  //         scrape.result,
+  //         `</scrape_result>`,
+  //       ].join("\n\n"),
+  //     )
+  //     .join("\n\n");
+  // }
 }
 
 export const actionSchema = z.object({
   title: z
     .string()
     .describe(
-      "The title of the action, to be displayed in the UI. Be extremely concise. 'Searching Saka's injury history', 'Checking HMRC industrial action', 'Comparing toaster ovens'",
+      "The title of the action, to be displayed in the UI. Be extremely concise. 'Continuing search', 'Providing answer'",
     ),
   reasoning: z.string().describe("The reason you chose this step."),
-  type: z.enum(["search", "scrape", "answer"]).describe(
+  type: z.enum(["continue", "answer"]).describe(
     `The type of action to take.
-       - 'search': Search the web for more information.
-       - 'scrape': Scrape a URL.
-       - 'answer': Answer the user's question and complete the loop.`,
+      - 'continue': Continue searching for more information.
+      - 'answer': Answer the user's question and complete the loop.`,
   ),
-  query: z
+  feedback: z
     .string()
+    .optional()
     .describe(
-      "The query to search for. Required if type is 'search', otherwise omit this field.",
-    )
-    .optional(),
-  urls: z
-    .array(z.string())
-    .describe(
-      "The URLs to scrape. Required if type is 'scrape', otherwise omit this field.",
-    )
-    .optional(),
+      "Required only when type is 'continue'. Detailed feedback about what information is missing or what needs to be improved in the search. This will be used to guide the next search iteration.",
+    ),
 });
-
-export type Action = z.infer<typeof actionSchema>;
 
 export const getNextAction = async (
   context: SystemContext,
@@ -161,37 +190,29 @@ export const getNextAction = async (
     model,
     schema: actionSchema,
     experimental_telemetry: telemetry,
-    system: `You are a helpful AI assistant that can search the web, scrape URLs, or answer questions. Your goal is to determine the next best action to take based on the current context.`,
-    prompt: `
-    Message History:
-      ${context.getMessageHistory()}
+    system: `You are a research query optimizer. Your task is to analyze search results against the original research goal and either decide to answer the question or to search for more information.`,
+    prompt: `Message History:
+${context.getMessageHistory()}
 
-    ${context.getLocationContext()}
+Based on this context, choose the next action:
+1. If you need more information, use 'continue' and provide detailed feedback about what's missing.
+2. If you have enough information to answer the question, use 'answer'.
 
-    Based on this context, choose the next action:
+Remember:
+- Only use 'continue' if you need more information, and provide detailed feedback.
+- Use 'answer' when you have enough information to provide a complete answer.
+- Feedback is only required when choosing 'continue'.
 
-    1. If you need more information, use "search" with a relevant query
-    2. If you have URLs that need to be scraped, use "scrape" with those URLs
-    3. If you have enough information to answer the question, use "answer"
+Here is the search history:
 
-    Remember:
-    - Only use "search" if you need more information
-    - Only use "scrape" if you have URLs to scrape
-    - Use "answer" when you have enough information to provide a complete answer
-
-Here is the context:
-
-    <context>
-    ${context.getQueryHistory()}
-
-    ${context.getScrapeHistory()}
+ <context>
+    ${context.getSearchHistory()}
 
     ${context.getLocationContext()}
     </context>
 
     Your options:
      - search: Search the web for more information.
-     - scrape: Scrape one or more URLs for full content.
      - answer: Answer the user's question and complete the loop.
      
      Choose the most appropriate next action based on the context.

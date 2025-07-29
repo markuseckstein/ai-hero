@@ -24,7 +24,7 @@ export const env = createEnv({
     LANGFUSE_PUBLIC_KEY: z.string().min(1, "LangFuse public key is required"),
     LANGFUSE_BASEURL: z.string().url(),
     EVAL_DATASET: z.enum(["dev", "ci", "regression"]).default("dev"),
-    SEARCH_RESULTS_COUNT: z.coerce.number().default(10),
+    SEARCH_RESULTS_COUNT: z.coerce.number().default(5),
   },
 
   /**
