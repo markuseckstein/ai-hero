@@ -48,7 +48,7 @@ export const ReasoningSteps = ({
                       annotation.action.feedback && (
                         <div className="mt-2 flex items-center gap-2 text-sm text-gray-400">
                           <SearchIcon className="size-4" />
-                          <span>{annotation.action.feedback}</span>
+                          <Markdown>{annotation.action.feedback}</Markdown>
                         </div>
                       )}
                   </div>

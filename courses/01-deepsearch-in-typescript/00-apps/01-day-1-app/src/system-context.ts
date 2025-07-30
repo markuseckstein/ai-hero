@@ -2,18 +2,6 @@ import { z } from "zod";
 import { generateObject, type Message } from "ai";
 import { model } from "./model";
 
-// type QueryResultSearchResult = {
-//   date: string;
-//   title: string;
-//   url: string;
-//   snippet: string;
-// };
-
-// export type QueryResult = {
-//   query: string;
-//   results: QueryResultSearchResult[];
-// };
-
 export type ScrapeResult = {
   url: string;
   result: string;
@@ -31,9 +19,6 @@ export type SearchHistoryEntry = {
   query: string;
   results: SearchResult[];
 };
-
-// const toQueryResult = (query: QueryResultSearchResult) =>
-//   [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
 
 export type AnswerTone = "franke" | "friend" | "ai_assistant";
 
@@ -61,8 +46,18 @@ export class SystemContext {
     this.location = location;
   }
 
+  private lastFeedback?: string;
+
   reportSearch(search: SearchHistoryEntry) {
     this.searchHistory.push(search);
+  }
+
+  setLastFeedback(feedback: string) {
+    this.lastFeedback = feedback;
+  }
+
+  getLastFeedback(): string | undefined {
+    return this.lastFeedback;
   }
 
   getSearchHistory(): string {
@@ -120,38 +115,6 @@ export class SystemContext {
   get currentStep() {
     return this.step;
   }
-
-  // reportQueries(queries: QueryResult[]) {
-  //   this.queryHistory.push(...queries);
-  // }
-
-  // reportScrapes(scrapes: ScrapeResult[]) {
-  //   this.scrapeHistory.push(...scrapes);
-  // }
-
-  // getQueryHistory(): string {
-  //   return this.queryHistory
-  //     .map((query) =>
-  //       [
-  //         `## Query: \"${query.query}\"`,
-  //         ...query.results.map(toQueryResult),
-  //       ].join("\n\n"),
-  //     )
-  //     .join("\n\n");
-  // }
-
-  // getScrapeHistory(): string {
-  //   return this.scrapeHistory
-  //     .map((scrape) =>
-  //       [
-  //         `## Scrape: \"${scrape.url}\"`,
-  //         `<scrape_result>`,
-  //         scrape.result,
-  //         `</scrape_result>`,
-  //       ].join("\n\n"),
-  //     )
-  //     .join("\n\n");
-  // }
 }
 
 export const actionSchema = z.object({
@@ -190,7 +153,20 @@ export const getNextAction = async (
     model,
     schema: actionSchema,
     experimental_telemetry: telemetry,
-    system: `You are a research query optimizer. Your task is to analyze search results against the original research goal and either decide to answer the question or to search for more information.`,
+    system: `You are a research query optimizer. Your task is to analyze search results against the original research goal and either decide to answer the question or to search for more information.
+
+PROCESS:
+1. Identify ALL information explicitly requested in the original research goal
+2. Analyze what specific information has been successfully retrieved in the search results
+3. Identify ALL information gaps between what was requested and what was found
+4. For entity-specific gaps: Create targeted queries for each missing attribute of identified entities
+5. For general knowledge gaps: Create focused queries to find the missing conceptual information
+
+When providing feedback (only required when type is 'continue'):
+- Be specific about what information is missing
+- Explain why the current information is insufficient
+- Suggest what kind of information would be most helpful
+- Consider both factual gaps and conceptual understanding gaps`,
     prompt: `Message History:
 ${context.getMessageHistory()}
 
@@ -199,9 +175,13 @@ Based on this context, choose the next action:
 2. If you have enough information to answer the question, use 'answer'.
 
 Remember:
-- Only use 'continue' if you need more information, and provide detailed feedback.
-- Use 'answer' when you have enough information to provide a complete answer.
-- Feedback is only required when choosing 'continue'.
+- When using 'continue':
+  * You MUST provide detailed feedback about what information is missing
+  * Feedback should explain why current information is insufficient
+  * Feedback will guide the next search iteration
+- When using 'answer':
+  * Do NOT include any feedback
+  * Only choose this when you have enough information to answer completely
 
 Here is the search history:
 

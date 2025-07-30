@@ -49,11 +49,14 @@ Finally, translate this plan into a numbered list of 3-5 sequential search queri
 Message History:
 ${context.getMessageHistory()}
 
+Search History:
+${context.getSearchHistory()}
+
+${context.getLastFeedback() ? `Previous Search Feedback:\n${context.getLastFeedback()}` : ""}
+
 Location Context:
 ${context.getLocationContext()}
 
-Search History:
-${context.getSearchHistory()}
 
 First User Message:
 ${context.getFirstUserMessage()}

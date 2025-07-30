@@ -84,8 +84,14 @@ export async function runAgentLoop(
       ctx.reportSearch({ query: search.query, results: search.results });
     }
 
-    // Step 4: Decide next action
+    // Step 4: Decide next action and store feedback
     const nextAction = await getNextAction(ctx, opts.langfuseTraceId);
+
+    // Store feedback in context if provided
+    if (nextAction.type === "continue" && nextAction.feedback) {
+      ctx.setLastFeedback(nextAction.feedback);
+    }
+
     if (opts.writeMessageAnnotation) {
       opts.writeMessageAnnotation({
         type: "NEW_ACTION",
