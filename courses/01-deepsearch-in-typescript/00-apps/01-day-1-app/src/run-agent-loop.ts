@@ -1,4 +1,4 @@
-import type { StreamTextResult, Message, streamText } from "ai";
+import { streamText, type StreamTextResult, type Message } from "ai";
 import { answerQuestion } from "./answer-question";
 import type { AnswerTone, UserLocation } from "./system-context";
 import { SystemContext, getNextAction } from "./system-context";
@@ -8,6 +8,8 @@ import { searchSerper } from "./serper";
 import { bulkCrawlWebsites } from "./server/scraper";
 import { summarizeURL } from "./summarize-url";
 import { env } from "./env";
+import { checkIsSafe } from "./guardrails";
+import { model } from "./model";
 
 export async function runAgentLoop(
   messages: Message[],
@@ -20,6 +22,33 @@ export async function runAgentLoop(
   },
 ): Promise<StreamTextResult<{}, string>> {
   const ctx = new SystemContext(messages, opts.tone, opts.userLocation);
+
+  // Guardrail check before entering the main loop
+  const guardrailResult = await checkIsSafe(ctx, {
+    langfuseTraceId: opts.langfuseTraceId,
+  });
+  if (guardrailResult.classification === "refuse") {
+    // Return a refusal message as a streamText result
+    return streamText({
+      model,
+      system:
+        "You are a content safety guardrail. Refuse to answer unsafe questions.",
+      prompt:
+        guardrailResult.reason ||
+        "I apologize, but I cannot assist with that request as it may be unsafe or inappropriate.",
+      onFinish: opts.onFinish,
+      experimental_telemetry: opts.langfuseTraceId
+        ? {
+            isEnabled: true,
+            functionId: "guardrail-refuse-response",
+            metadata: {
+              langfuseTraceId: opts.langfuseTraceId,
+            },
+          }
+        : undefined,
+    });
+  }
+
   // Track which steps have sent source annotations
   const sourcesAnnotationsSent = new Set<number>();
   console.log(
