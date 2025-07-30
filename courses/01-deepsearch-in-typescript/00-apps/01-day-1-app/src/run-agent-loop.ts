@@ -20,6 +20,8 @@ export async function runAgentLoop(
   },
 ): Promise<StreamTextResult<{}, string>> {
   const ctx = new SystemContext(messages, opts.tone, opts.userLocation);
+  // Track which steps have sent source annotations
+  const sourcesAnnotationsSent = new Set<number>();
   console.log(
     `Starting agent loop with initial message: "${messages[messages.length - 1]?.content ?? ""}"`,
   );
@@ -31,6 +33,15 @@ export async function runAgentLoop(
       langfuseTraceId: opts.langfuseTraceId,
     });
 
+    // Send plan annotation
+    if (opts.writeMessageAnnotation) {
+      opts.writeMessageAnnotation({
+        type: "PLAN",
+        plan,
+        queries,
+      });
+    }
+
     // Step 2: Search in parallel for all queries
     const searchResults = await Promise.all(
       queries.map(async (query) => {
@@ -38,6 +49,30 @@ export async function runAgentLoop(
           { q: query, num: env.SEARCH_RESULTS_COUNT },
           undefined,
         );
+
+        // Collect sources early
+        const sources = results.organic.map((res) => {
+          const url = new URL(res.link);
+          return {
+            title: res.title,
+            url: res.link,
+            snippet: res.snippet,
+            favicon: `https://www.google.com/s2/favicons?domain=${url.hostname}&sz=128`,
+          };
+        });
+
+        // Send sources annotation only once per step
+        if (
+          opts.writeMessageAnnotation &&
+          !sourcesAnnotationsSent.has(ctx.currentStep)
+        ) {
+          opts.writeMessageAnnotation({
+            type: "SOURCES",
+            sources,
+          });
+          sourcesAnnotationsSent.add(ctx.currentStep);
+        }
+
         return {
           query,
           results: results.organic.map((res) => ({

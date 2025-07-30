@@ -3,6 +3,19 @@ import { useState } from "react";
 import Markdown from "react-markdown";
 import type { OurMessageAnnotation } from "~/types";
 
+const getStepTitle = (annotation: OurMessageAnnotation): string => {
+  switch (annotation.type) {
+    case "NEW_ACTION":
+      return annotation.action.title;
+    case "PLAN":
+      return "Research Plan";
+    case "SOURCES":
+      return "Search Results";
+    default:
+      return "Unknown Step";
+  }
+};
+
 export const ReasoningSteps = ({
   annotations,
 }: {
@@ -36,21 +49,75 @@ export const ReasoningSteps = ({
                 >
                   {index + 1}
                 </span>
-                {annotation.action.title}
+                {getStepTitle(annotation)}
               </button>
               <div className={`${isOpen ? "mt-1" : "hidden"}`}>
                 {isOpen && (
                   <div className="px-2 py-1">
-                    <div className="text-sm italic text-gray-400">
-                      <Markdown>{annotation.action.reasoning}</Markdown>
-                    </div>
-                    {annotation.action.type === "continue" &&
-                      annotation.action.feedback && (
-                        <div className="mt-2 flex items-center gap-2 text-sm text-gray-400">
-                          <SearchIcon className="size-4" />
-                          <Markdown>{annotation.action.feedback}</Markdown>
+                    {annotation.type === "NEW_ACTION" && (
+                      <>
+                        <div className="text-sm italic text-gray-400">
+                          <Markdown>{annotation.action.reasoning}</Markdown>
                         </div>
-                      )}
+                        {annotation.action.type === "continue" &&
+                          annotation.action.feedback && (
+                            <div className="mt-2 flex items-center gap-2 text-sm text-gray-400">
+                              <SearchIcon className="size-4" />
+                              <Markdown>{annotation.action.feedback}</Markdown>
+                            </div>
+                          )}
+                      </>
+                    )}
+
+                    {annotation.type === "PLAN" && (
+                      <>
+                        <div className="text-sm text-gray-400">
+                          <Markdown>{annotation.plan}</Markdown>
+                        </div>
+                        <div className="mt-2 space-y-1">
+                          {annotation.queries.map((query, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2 text-sm text-gray-400"
+                            >
+                              <SearchIcon className="size-4" />
+                              <span>{query}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {annotation.type === "SOURCES" && (
+                      <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {annotation.sources.map((source, i) => (
+                          <div
+                            key={i}
+                            className="flex gap-3 rounded-lg bg-gray-800 p-3"
+                          >
+                            <img
+                              src={source.favicon}
+                              alt=""
+                              className="h-6 w-6 rounded-sm"
+                            />
+                            <div className="flex flex-col gap-1">
+                              <a
+                                href={source.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-sm font-medium text-blue-400 hover:text-blue-300"
+                              >
+                                {source.title}
+                                <LinkIcon className="size-3" />
+                              </a>
+                              <p className="text-sm text-gray-400">
+                                {source.snippet}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

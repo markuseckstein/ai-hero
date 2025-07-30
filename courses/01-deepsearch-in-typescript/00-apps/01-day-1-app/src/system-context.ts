@@ -117,7 +117,7 @@ export class SystemContext {
   }
 }
 
-export const actionSchema = z.object({
+const actionSchema = z.object({
   title: z
     .string()
     .describe(
@@ -136,6 +136,8 @@ export const actionSchema = z.object({
       "Required only when type is 'continue'. Detailed feedback about what information is missing or what needs to be improved in the search. This will be used to guide the next search iteration.",
     ),
 });
+
+export type Action = z.infer<typeof actionSchema>;
 
 export const getNextAction = async (
   context: SystemContext,
