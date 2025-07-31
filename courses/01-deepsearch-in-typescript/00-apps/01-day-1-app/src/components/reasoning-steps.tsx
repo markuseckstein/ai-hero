@@ -11,6 +11,8 @@ const getStepTitle = (annotation: OurMessageAnnotation): string => {
       return "Research Plan";
     case "SOURCES":
       return "Search Results";
+    case "USAGE":
+      return `Token Usage: ${annotation.totalTokens.toLocaleString()} tokens`;
     default:
       return "Unknown Step";
   }
@@ -47,13 +49,19 @@ export const ReasoningSteps = ({
                       : "bg-gray-800 text-gray-300"
                   }`}
                 >
-                  {index + 1}
+                  {annotation.type === "USAGE" ? "€" : index + 1}
                 </span>
                 {getStepTitle(annotation)}
               </button>
               <div className={`${isOpen ? "mt-1" : "hidden"}`}>
                 {isOpen && (
                   <div className="px-2 py-1">
+                    {annotation.type === "USAGE" && (
+                      <div className="text-sm text-gray-400">
+                        Total tokens used in this response:{" "}
+                        {annotation.totalTokens.toLocaleString()}
+                      </div>
+                    )}
                     {annotation.type === "NEW_ACTION" && (
                       <>
                         <div className="text-sm italic text-gray-400">

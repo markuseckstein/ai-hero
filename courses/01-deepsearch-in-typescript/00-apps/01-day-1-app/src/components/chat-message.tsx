@@ -41,6 +41,7 @@ const components: Components = {
 import React, { useState } from "react";
 import type { OurMessageAnnotation } from "~/types";
 import { ReasoningSteps } from "./reasoning-steps";
+import { formatNumber } from "../utils";
 
 const ToolInvocation = ({
   part,
@@ -135,6 +136,16 @@ export const ChatMessage = ({
               return null;
             })}
         </div>
+
+        {/* Display token usage if available */}
+        {isAI && annotations?.find((a) => a.type === "USAGE") && (
+          <div className="mt-2 text-xs text-gray-500">
+            Tokens used:{" "}
+            {formatNumber(
+              annotations.find((a) => a.type === "USAGE")?.totalTokens ?? 0,
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

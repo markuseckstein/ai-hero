@@ -2,6 +2,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { model } from "./model";
 import type { SystemContext } from "./system-context";
+import type { Usage } from "./types";
 
 export const queryRewriteSchema = z.object({
   plan: z
@@ -18,13 +19,15 @@ export const queryRewriteSchema = z.object({
     ),
 });
 
-export type QueryRewriteResult = z.infer<typeof queryRewriteSchema>;
+export type QueryRewriteResult = z.infer<typeof queryRewriteSchema> & {
+  usage?: Usage;
+};
 
 export const queryRewriter = async (
   context: SystemContext,
   opts: { langfuseTraceId?: string } = {},
 ): Promise<QueryRewriteResult> => {
-  const result = await generateObject({
+  const { object: result, usage } = await generateObject({
     model,
     schema: queryRewriteSchema,
     system: `You are a strategic research planner with expertise in breaking down complex questions into logical search steps. Your primary role is to create a detailed research plan before generating any search queries.`,
@@ -70,6 +73,9 @@ ${context.getFirstUserMessage()}
       : undefined,
   });
 
-  console.log("Query rewriter returned", result.object);
-  return result.object;
+  console.log("Query rewriter returned", result);
+  return {
+    ...result,
+    usage,
+  };
 };

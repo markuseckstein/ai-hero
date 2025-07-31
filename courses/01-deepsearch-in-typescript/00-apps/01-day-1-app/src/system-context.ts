@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { generateObject, type Message } from "ai";
 import { model } from "./model";
+import type { Usage, UsageRecord } from "./types";
 
 export type ScrapeResult = {
   url: string;
@@ -36,6 +37,8 @@ export class SystemContext {
   // private scrapeHistory: ScrapeResult[] = [];
   private readonly messages: Message[];
   private readonly searchHistory: SearchHistoryEntry[] = [];
+  private readonly usageHistory: UsageRecord[] = [];
+  private totalTokens = 0;
 
   constructor(
     messages: Message[],
@@ -44,6 +47,15 @@ export class SystemContext {
   ) {
     this.messages = messages;
     this.location = location;
+  }
+
+  public reportUsage(label: string, usage: Usage) {
+    this.usageHistory.push({ label, usage });
+    this.totalTokens += usage.totalTokens;
+  }
+
+  public getTotalTokens(): number {
+    return this.totalTokens;
   }
 
   private lastFeedback?: string;

@@ -11,3 +11,10 @@ export function isNewChatCreated(data: unknown): data is {
     typeof (data as any).chatId === "string"
   );
 }
+
+/**
+ * Format a number with comma separators
+ */
+export function formatNumber(num: number): string {
+  return num.toLocaleString();
+}

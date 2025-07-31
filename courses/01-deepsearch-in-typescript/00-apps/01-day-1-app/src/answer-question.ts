@@ -96,5 +96,12 @@ If you do not have enough information, explain what is missing and make your bes
     // maxTokens: 1024,
   });
 
+  // Track usage after the stream completes
+  result.usage.then((usage) => {
+    if (usage) {
+      ctx.reportUsage("Final Answer", usage);
+    }
+  });
+
   return result;
 }

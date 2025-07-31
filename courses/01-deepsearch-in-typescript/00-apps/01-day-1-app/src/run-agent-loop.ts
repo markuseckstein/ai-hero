@@ -96,9 +96,14 @@ Please reply to the user with a clarification request.`,
     console.log(`----  Agent loop step ${ctx.currentStep} ----`);
 
     // Step 1: Plan and rewrite queries
-    const { plan, queries } = await queryRewriter(ctx, {
+    const { plan, queries, usage } = await queryRewriter(ctx, {
       langfuseTraceId: opts.langfuseTraceId,
     });
+
+    // Track usage
+    if (usage) {
+      ctx.reportUsage("Query Rewrite", usage);
+    }
 
     // Send plan annotation
     if (opts.writeMessageAnnotation) {
@@ -201,12 +206,26 @@ Please reply to the user with a clarification request.`,
       });
     }
     if (nextAction.type === "answer") {
+      // Send total token usage annotation before the answer
+      if (opts.writeMessageAnnotation) {
+        opts.writeMessageAnnotation({
+          type: "USAGE",
+          totalTokens: ctx.getTotalTokens(),
+        });
+      }
       return answerQuestion(ctx, {
         langfuseTraceId: opts.langfuseTraceId,
         onFinish: opts.onFinish,
       });
     }
     ctx.incrementStep();
+  }
+  // Send total token usage annotation before final answer
+  if (opts.writeMessageAnnotation) {
+    opts.writeMessageAnnotation({
+      type: "USAGE",
+      totalTokens: ctx.getTotalTokens(),
+    });
   }
   return answerQuestion(ctx, {
     isFinal: true,
