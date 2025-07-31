@@ -11,3 +11,6 @@ export const summarizerModel = google("gemini-2.0-flash-lite");
 
 // Use Google Gemini 2.0 Flash for quick, reliable content safety checks
 export const guardrailModel = google("gemini-2.0-flash-001");
+
+// Use a fast model for question clarity checks
+export const clarificationModel = google("gemini-2.0-flash-lite");

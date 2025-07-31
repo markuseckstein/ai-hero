@@ -9,7 +9,8 @@ import { bulkCrawlWebsites } from "./server/scraper";
 import { summarizeURL } from "./summarize-url";
 import { env } from "./env";
 import { checkIsSafe } from "./guardrails";
-import { model } from "./model";
+import { clarificationModel, model } from "./model";
+import { checkIfQuestionNeedsClarification } from "./check-question-clarity";
 
 export async function runAgentLoop(
   messages: Message[],
@@ -41,6 +42,43 @@ export async function runAgentLoop(
         ? {
             isEnabled: true,
             functionId: "guardrail-refuse-response",
+            metadata: {
+              langfuseTraceId: opts.langfuseTraceId,
+            },
+          }
+        : undefined,
+    });
+  }
+
+  // Check if the question needs clarification
+  const clarificationResult = await checkIfQuestionNeedsClarification(ctx, {
+    langfuseTraceId: opts.langfuseTraceId,
+  });
+
+  if (clarificationResult.needsClarification) {
+    return streamText({
+      model: clarificationModel,
+      system: `You are a clarification agent. Your job is to ask the user for clarification on their question.
+      
+Key Guidelines:
+- Be polite and friendly
+- Ask specific questions to get the needed clarification
+- Explain briefly why the clarification will help provide a better answer
+- Keep your response concise`,
+      prompt: `Here is the message history:
+
+${ctx.getMessageHistory()}
+
+And here is why the question needs clarification:
+
+${clarificationResult.reason}
+
+Please reply to the user with a clarification request.`,
+      onFinish: opts.onFinish,
+      experimental_telemetry: opts.langfuseTraceId
+        ? {
+            isEnabled: true,
+            functionId: "clarification-request-response",
             metadata: {
               langfuseTraceId: opts.langfuseTraceId,
             },
