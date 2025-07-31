@@ -19,7 +19,7 @@ export async function runAgentLoop(
     tone: AnswerTone;
     langfuseTraceId?: string;
     onFinish: Parameters<typeof streamText>[0]["onFinish"];
-    userLocation: UserLocation;
+    userLocation?: UserLocation;
   },
 ): Promise<StreamTextResult<{}, string>> {
   const ctx = new SystemContext(messages, opts.tone, opts.userLocation);
